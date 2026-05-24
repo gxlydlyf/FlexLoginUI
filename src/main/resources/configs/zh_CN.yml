@@ -1,0 +1,49 @@
+# == 不要修改 config-version ==
+config-version: 1
+# == config-version 不要修改 ==
+
+debug: false
+# 位于 langs 目录下的 yml 文件名
+language: zh_CN.yml
+text:
+  # 格式化颜色等请用 “§” 而不是 “&”
+  login:
+    title: "登录"
+    tip: "§7请输入密码"
+    password_label: "密码"
+    login_button: "登录"
+    close_button: "关闭页面"
+    exit_button: "退出游戏"
+    exit_message: "§c取消登录"
+    password_error: "§c密码错误"
+    reopen: "输入 /logui 重新打开登录页面"
+  register:
+    title: "注册"
+    tip: "§7请注册账号"
+    tip_password: "§7请设置密码"
+    tip_confirm: "§7请确认密码"
+    password_label: "设置密码"
+    confirm_label: "确认密码"
+    register_button: "注册"
+    close_button: "关闭页面"
+    exit_button: "退出游戏"
+    exit_message: "§c取消注册"
+    please_reset_password: "请重设密码。"
+    registration_failed: "§c注册失败！"
+    registration_successful: "注册成功！"
+    password_not_match: "§c两次密码不匹配"
+    reopen: "输入 /regui 重新打开注册页面"
+  bedrock_placeholder:
+    login:
+      password: "请输入密码"
+    register:
+      password: "请设置密码"
+      confirm: "请再次输入密码"
+pages:
+  dialog:
+    horizontal_buttons: false
+    allow_close: false
+  anvil:
+    allow_close: false
+  bedrock:
+    allow_close: false

@@ -1,0 +1,49 @@
+# == DO NOT EDIT config-version ==
+config-version: 1
+# == DO NOT EDIT config-version ==
+
+debug: false
+# YAML file names in the "langs" directory
+language: en.yml
+text:
+  # Use "§" for color formatting instead of "&"
+  login:
+    title: "Login"
+    tip: "§7Please enter your password"
+    password_label: "Password"
+    login_button: "Login"
+    close_button: "Close"
+    exit_button: "Disconnect"
+    exit_message: "§cLogin cancelled"
+    password_error: "§cIncorrect password"
+    reopen: "Type /logui to reopen the login page"
+  register:
+    title: "Register"
+    tip: "§7Please register an account"
+    tip_password: "§7Please set a password"
+    tip_confirm: "§7Please confirm your password"
+    password_label: "Set Password"
+    confirm_label: "Confirm Password"
+    register_button: "Register"
+    close_button: "Close"
+    exit_button: "Disconnect"
+    exit_message: "§cRegistration cancelled"
+    please_reset_password: "Please reset your password."
+    registration_failed: "§cRegistration failed!"
+    registration_successful: "Registration successful!"
+    password_not_match: "§cPasswords do not match"
+    reopen: "Type /regui to reopen the registration page"
+  bedrock_placeholder:
+    login:
+      password: "Enter your password"
+    register:
+      password: "Set your password"
+      confirm: "Re-enter your password"
+pages:
+  dialog:
+    horizontal_buttons: false
+    allow_close: false
+  anvil:
+    allow_close: false
+  bedrock:
+    allow_close: false

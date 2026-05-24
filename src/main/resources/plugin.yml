@@ -1,0 +1,48 @@
+name: FlexLoginUI
+version: '${project.version}'
+description: 为游戏登录注册提供 UI
+main: com.gxlydlyf.flexloginui.FlexLoginUI
+api-version: '1.13'
+authors: [ gxlydlyf ]
+website: https://github.com/gxlydlyf/FlexLoginUI
+depend:
+  - AuthMe
+  - packetevents
+softdepend:
+  - ViaVersion
+  - Geyser-Spigot
+  - floodgate
+permissions:
+  flexloginui.commands.*:
+    description: FlexLoginUI 命令
+    default: true
+    children:
+      flexloginui.commands.login: true
+      flexloginui.commands.register: true
+  flexloginui.commands.manager:
+    description: 管理 FlexLoginUI 插件命令
+    default: op
+  flexloginui.pages.*:
+    description: 使用 FlexLoginUI UI 页面
+    default: true
+    children:
+      flexloginui.pages.bedrock: true
+      flexloginui.pages.dialog: true
+      flexloginui.pages.anvil: true
+commands:
+  flexloginui:
+    description: 管理 FlexLoginUI 插件
+    usage: /<command> [reload]
+    permission: flexloginui.commands.manager
+    permission-message: You do not have permission!
+    aliases: [ flui ]
+  logui:
+    description: 打开登录 UI 界面
+    usage: /<command>
+    permission: flexloginui.commands.login
+    permission-message: You do not have permission!
+  regui:
+    description: 打开注册 UI 界面
+    usage: /<command>
+    permission: flexloginui.commands.register
+    permission-message: You do not have permission!

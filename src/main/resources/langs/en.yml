@@ -1,0 +1,17 @@
+# == DO NOT EDIT file-version ==
+file-version: 1
+# == DO NOT EDIT file-version ==
+
+# Use "§" for color formatting instead of "&"
+prefix: "§6[FlexLoginUI]§f"
+plugin_reload_success: "§aPlugin configuration reloaded successfully"
+command_only_for_players: "§cThis command can only be used by players"
+no_need_to_login: "§cYou don't need to log in"
+already_logged_in: "§cYou are already logged in"
+no_need_to_register: "§cYou don't need to register"
+already_registered: "§cYou are already registered"
+not_logged_in: "§cYou haven't logged in yet"
+plugin_help:
+  title: "§fPlugin Help"
+  reload: "§fReload plugin configuration"
+unknown_command: "§cUnknown command"

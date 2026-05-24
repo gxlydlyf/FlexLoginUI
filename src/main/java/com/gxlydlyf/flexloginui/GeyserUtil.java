@@ -1,0 +1,109 @@
+package com.gxlydlyf.flexloginui;
+
+import fr.xephi.authme.api.v3.AuthMeApi;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.geysermc.cumulus.form.CustomForm;
+import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.player.FloodgatePlayer;
+import org.geysermc.geyser.api.GeyserApi;
+
+import static com.gxlydlyf.flexloginui.DialogUtil.loginText;
+import static com.gxlydlyf.flexloginui.DialogUtil.registerText;
+
+public class GeyserUtil {
+    public static boolean enabled = false;
+    public static final ConfigUtil config = FlexLoginUI.config;
+    public static GeyserListeners geyserListeners;
+
+    public static String bedrockPlaceholder(String key) {
+        return config.getString("text.bedrock_placeholder." + key);
+    }
+
+    public static boolean allowClose() {
+        return config.getBoolean("pages.bedrock.allow_close");
+    }
+
+    public static boolean isBedrock(Player player) {
+        if (!enabled) return false;
+        return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
+    }
+
+    public static void registerEventListener() {
+        geyserListeners = new GeyserListeners();
+        GeyserApi.api().eventBus().register(geyserListeners, geyserListeners);
+    }
+
+    public static void unregisterEventListener() {
+        GeyserApi.api().eventBus().unregisterAll(geyserListeners);
+    }
+
+    private static void sendForm(Player player, CustomForm.Builder formBuilder) {
+        FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
+        Bukkit.getServer().getScheduler().runTaskLater(
+                FlexLoginUI.instance,
+                () -> {
+                    if (!AuthMeApi.getInstance().isAuthenticated(player)) {
+                        floodgatePlayer.sendForm(formBuilder.build());
+                        if (FlexLoginUI.config.isDebug()) {
+                            FlexLoginUI.logger.info("Send Geyser form");
+                        }
+                    }
+                },
+                2L
+        );
+    }
+
+    public static void sendLoginForm(Player player, String tip) {
+        sendForm(player, buildLoginForm(player, tip));
+    }
+
+    public static void sendRegisterForm(Player player, String tip) {
+        sendForm(player, buildRegisterForm(player, tip));
+    }
+
+    public static void sendLoginForm(Player player) {
+        sendLoginForm(player, loginText("tip"));
+    }
+
+    public static void sendRegisterForm(Player player) {
+        sendRegisterForm(player, registerText("tip"));
+    }
+
+    private static CustomForm.Builder buildLoginForm(Player player, String tip) {
+        return CustomForm.builder()
+                .title(loginText("title"))
+                .label(tip)
+                .input(loginText("password_label"), bedrockPlaceholder("login.password"))
+                .validResultHandler(response -> PacketListeners.onPlayerSubmitLogin(player, response.asInput()))
+                .closedResultHandler(response -> {
+                    if (allowClose()) {
+                        player.sendMessage(loginText("reopen"));
+                    } else {
+                        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> {
+                            player.kickPlayer(loginText("exit_message"));
+                        });
+                    }
+                })
+                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, "log", response.errorMessage()));
+    }
+
+    private static CustomForm.Builder buildRegisterForm(Player player, String tip) {
+        return CustomForm.builder()
+                .title(registerText("title"))
+                .label(tip)
+                .input(registerText("password_label"), bedrockPlaceholder("register.password"))
+                .input(registerText("confirm_label"), bedrockPlaceholder("register.confirm"))
+                .validResultHandler(response -> PacketListeners.onPlayerSubmitRegister(player, response.next(), response.next()))
+                .closedResultHandler(response -> {
+                    if (allowClose()) {
+                        player.sendMessage(registerText("reopen"));
+                    } else {
+                        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> {
+                            player.kickPlayer(registerText("exit_message"));
+                        });
+                    }
+                })
+                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, "reg", response.errorMessage()));
+    }
+}

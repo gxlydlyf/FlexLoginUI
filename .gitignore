@@ -1,0 +1,5 @@
+/.idea/
+/tests/
+/target/
+/dependency-reduced-pom.xml
+/FlexLoginUI.iml
