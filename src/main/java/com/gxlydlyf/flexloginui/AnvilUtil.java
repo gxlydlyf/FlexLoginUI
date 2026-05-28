@@ -37,7 +37,10 @@ public class AnvilUtil {
     private static final int STATE_ID = 0;
 
     public static void setAnvilWindowType() {
-        if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20_3)) {
+        ServerVersion version = PacketEvents.getAPI().getServerManager().getVersion();
+        if (version.isNewerThanOrEquals(ServerVersion.V_26_1)) {
+            ANVIL_WINDOW_TYPE = MinecraftUtil.getAnvilMenuId();
+        } else if (version.isNewerThanOrEquals(ServerVersion.V_1_20_3)) {
             ANVIL_WINDOW_TYPE = 8;
         }
     }
