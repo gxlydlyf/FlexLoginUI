@@ -2,7 +2,7 @@
 
 # FlexLoginUI
 
-用于 AuthMeReload 5.7.0 的图形化登录插件，支持铁砧登录、1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
+用于 AuthMeReloaded 的图形化登录插件，支持铁砧登录、1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
 
 > [!WARNING]
 > 我可能没有足够的时间对此插件进行测试与开发，欢迎报告问题。将来可能会支持更多登录插件、Java版本 和 Minecraft版本
@@ -13,12 +13,13 @@
 
 - Java 21+
 - 插件服务器 1.20+ （仅在 PurpurMC 经过测试）
-- [AuthMeReload 5.7.0](https://www.spigotmc.org/resources/authmereloaded.6269/) （暂未支持 6.0.0）
+- [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
 ### 可选依赖
 
-- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为不同版本提供不同页面
+- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为高于服务器版本客户端提供 Dialog 界面
+- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) 为低于服务器版本客户端提供铁砧界面，需要先安装 ViaVersion
 - [Geyser](https://geysermc.org/download?project=geyser) 和 [Floodgate](https://geysermc.org/download?project=floodgate)
   提供基岩版表单
 
@@ -31,6 +32,8 @@
 ### 对话框
 
 使用 1.21.6 及以上客户端版本加入服务器可见（如果安装 ViaVersion，服务器版本可小于 1.21.6）
+
+如果服务器版本大于等于 1.21.6，并且使用 AuthMeReloaded 6.0.0 及以上版本，并且启用 AuthMe 配置中的 settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.preJoin.enable，那么将会显示 AuthMe 自己的对话框而不是此插件的对话框。
 
 #### 垂直按钮
 

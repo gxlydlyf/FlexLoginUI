@@ -250,7 +250,7 @@ public class PacketListeners implements PacketListener, Listener {
     }
 
     public static void handlePlayerUI(Player player, long delay) {
-        if (!authMeApi.isUnrestricted(player)) {
+        if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
             if (ViaVersionUtil.shouldSendAnvil(player) || GeyserUtil.isBedrock(player)) {
                 Bukkit.getScheduler().runTaskLater(FlexLoginUI.instance, () -> {
                     if (player.isOnline()) {
@@ -282,14 +282,15 @@ public class PacketListeners implements PacketListener, Listener {
         handlePlayerUI(player, 0L);
     }
 
-    // 低版本服务器如果 Join 事件发包, dialog 会马上关闭
+    // 低版本服务器如果在 Join 事件马上发包, dialog 会马上关闭
     public static void handlePlayerDialog(Player player) {
-        if (authMeApi.isUnrestricted(player)) {
+        if (authMeApi.isUnrestricted(player) ||
+                authMeApi.isAuthenticated(player) ||
+                GeyserUtil.isBedrock(player) ||
+                AuthMeUtil.isEnabledAuthMeDialog()) {
             return;
         }
-        if (GeyserUtil.isBedrock(player)) {
-            return;
-        }
+
         if (authMeApi.isRegistered(player.getName())) {
             if (!authMeApi.isAuthenticated(player)) {
                 DialogUtil.sendLoginDialog(player);

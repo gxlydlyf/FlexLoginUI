@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Locale;
 import java.util.logging.Logger;
 
 public final class FlexLoginUI extends JavaPlugin {
@@ -41,6 +40,7 @@ public final class FlexLoginUI extends JavaPlugin {
         }
 
         AuthMeUtil.getAuthMe();
+        getLogger().info("AuthMe's own dialog enabled status: " + AuthMeUtil.isEnabledAuthMeDialog());
 
         EventManager events = PacketEvents.getAPI().getEventManager();
         PacketListeners listeners = new PacketListeners();
