@@ -2,7 +2,8 @@
 
 # FlexLoginUI
 
-Graphical authentication plugin for AuthMeReloaded. Supports Anvil login, 1.21.6+ Dialog UI login and Geyser Bedrock form
+Graphical authentication plugin for AuthMeReloaded. Supports Anvil login, 1.21.6+ Dialog UI login and Geyser Bedrock
+form
 login.
 
 > [!WARNING]
@@ -20,8 +21,10 @@ login.
 
 ### Optional Dependencies
 
-- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) Provides dialog UI for clients running a newer version than the server.
-- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) Provides anvil UI for clients running an older version than the server. You need to install ViaVersion first。
+- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) Provides dialog UI for clients running a newer
+  version than the server.
+- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) Provides anvil UI for clients running an older
+  version than the server. You need to install ViaVersion first。
 - [Geyser](https://geysermc.org/download?project=geyser) & [Floodgate](https://geysermc.org/download?project=floodgate)
   Enables login form for Bedrock Edition players
 
@@ -36,7 +39,9 @@ under server root directory, then restart the server.
 
 Visible for clients running 1.21.6 and above (If ViaVersion is installed, the server version can be lower than 1.21.6)
 
-If the server version is 1.21.6 or higher, AuthMeReloaded 6.0.0 or newer is installed, and either settings.registration.dialog.postJoin.enable or settings.registration.dialog.preJoin.enable in the AuthMe configuration is enabled, the native AuthMe dialog will be displayed instead of this plugin's dialog.
+If the server version is 1.21.6 or higher, AuthMeReloaded 6.0.0 or newer is installed, and either
+settings.registration.dialog.postJoin.enable or settings.registration.dialog.preJoin.enable in the AuthMe configuration
+is enabled, the native AuthMe dialog will be displayed instead of this plugin's dialog.
 
 #### Vertical Buttons
 

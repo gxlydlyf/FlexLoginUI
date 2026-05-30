@@ -19,7 +19,8 @@
 ### 可选依赖
 
 - [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为高于服务器版本客户端提供 Dialog 界面
-- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) 为低于服务器版本客户端提供铁砧界面，需要先安装 ViaVersion
+- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) 为低于服务器版本客户端提供铁砧界面，需要先安装
+  ViaVersion
 - [Geyser](https://geysermc.org/download?project=geyser) 和 [Floodgate](https://geysermc.org/download?project=floodgate)
   提供基岩版表单
 
@@ -33,7 +34,9 @@
 
 使用 1.21.6 及以上客户端版本加入服务器可见（如果安装 ViaVersion，服务器版本可小于 1.21.6）
 
-如果服务器版本大于等于 1.21.6，并且使用 AuthMeReloaded 6.0.0 及以上版本，并且启用 AuthMe 配置中的 settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.preJoin.enable，那么将会显示 AuthMe 自己的对话框而不是此插件的对话框。
+如果服务器版本大于等于 1.21.6，并且使用 AuthMeReloaded 6.0.0 及以上版本，并且启用 AuthMe 配置中的
+settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.preJoin.enable，那么将会显示 AuthMe
+自己的对话框而不是此插件的对话框。
 
 #### 垂直按钮
 
