@@ -10,7 +10,6 @@ depend:
   - packetevents
 softdepend:
   - ViaVersion
-  - ViaBackwards
   - Geyser-Spigot
   - floodgate
 permissions:

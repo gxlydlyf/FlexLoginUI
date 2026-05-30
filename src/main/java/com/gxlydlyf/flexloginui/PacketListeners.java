@@ -4,16 +4,26 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.dialog.CommonDialogData;
+import com.github.retrooper.packetevents.protocol.dialog.MultiActionDialog;
+import com.github.retrooper.packetevents.protocol.dialog.action.Action;
+import com.github.retrooper.packetevents.protocol.dialog.action.DynamicCustomAction;
+import com.github.retrooper.packetevents.protocol.dialog.action.DynamicRunCommandAction;
+import com.github.retrooper.packetevents.protocol.dialog.button.ActionButton;
 import com.github.retrooper.packetevents.protocol.nbt.NBT;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.common.server.WrapperCommonServerShowDialog;
+import com.github.retrooper.packetevents.wrapper.configuration.server.WrapperConfigServerShowDialog;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCustomClickAction;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientNameItem;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerShowDialog;
 import fr.xephi.authme.api.v3.AuthMeApi;
 import fr.xephi.authme.message.MessageKey;
 import fr.xephi.authme.service.ValidationService;
@@ -23,6 +33,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.geyser.api.GeyserApi;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -84,8 +96,10 @@ public class PacketListeners implements PacketListener, Listener {
 
 //        int packetId = e.getPacketId();
 
-        switch (e.getPacketType()) {
-            case PacketType.Play.Client.NAME_ITEM:
+        PacketTypeCommon packetTypeCommon = e.getPacketType();
+        if (packetTypeCommon instanceof PacketType.Play.Client clientType) {
+            switch (clientType) {
+                case NAME_ITEM:
 //            Object buffer = e.getByteBuf();
 //
 //            // 1. 读取字符串长度（VarInt）
@@ -97,102 +111,103 @@ public class PacketListeners implements PacketListener, Listener {
 //
 //            // 3. 转字符串
 //            String inputText = new String(bytes, StandardCharsets.UTF_8);
-                if (isActiveCustomAnvil(uuid)) {
-                    ANVIL_INPUT.put(
-                            player.getUniqueId(),
-                            new WrapperPlayClientNameItem(e).getItemName()
-                    );
-                    refreshCustomAnvil(player);
-                }
-                break;
-            case PacketType.Play.Client.CLICK_WINDOW: {
-                WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(e);
-                int windowId = packet.getWindowId();
-                // 只处理我们的铁砧窗口
-                if (!isCustomAnvil(windowId)) return;
-                e.setCancelled(true);
-                // TODO: 刷新时, slot 1 物品 Lore 恢复默认
-                refreshCustomAnvil(player);
-
-                boolean isLogin = windowId == AnvilUtil.WINDOW_ID_LOGIN;
-                boolean isRegister = windowId == AnvilUtil.WINDOW_ID_REGISTER;
-                int slot = packet.getSlot();
-                if (slot == 0) {
-                    if (FlexLoginUI.config.getBoolean("pages.anvil.allow_close")) {
-                        ANVIL_MANUALLY_CLOSE.add(player.getUniqueId());
-                        user.closeInventory();
-                        sendPlayerReopen(player, isLogin);
-                    } else {
-                        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> player.kickPlayer(
-                                isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message")
-                        ));
-                    }
-
-                }
-                // 点击输出槽 2
-                else if (slot == 2) {
-                    user.closeInventory();
-                    removeActiveCustomAnvil(uuid);
-                    String inputText = ANVIL_INPUT.get(uuid);
-                    if (inputText != null) {
-                        onPlayerSubmitLogin(player, inputText);
-                    }
-                    if (isRegister) {
-                        if (ANVIL_CONFIRM_PASSWORD.containsKey(uuid)) {
-                            onPlayerSubmitRegister(player, ANVIL_CONFIRM_PASSWORD.getOrDefault(uuid, ""), inputText);
-                            ANVIL_CONFIRM_PASSWORD.remove(uuid);
-                        } else {
-                            ANVIL_CONFIRM_PASSWORD.put(uuid, inputText);
-                            AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
-                        }
-                    }
-                }
-                Bukkit.getScheduler().runTask(FlexLoginUI.instance, player::updateInventory);
-                break;
-            }
-            case PacketType.Play.Client.CLOSE_WINDOW: {
-                int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
-                if (isCustomAnvil(windowId)) {
-                    if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-                        if (!ANVIL_MANUALLY_CLOSE.contains(player.getUniqueId())) {
-                            if (windowId == AnvilUtil.WINDOW_ID_LOGIN) {
-                                AnvilUtil.openLoginAnvil(player);
-                            } else if (windowId == AnvilUtil.WINDOW_ID_REGISTER) {
-                                if (ANVIL_CONFIRM_PASSWORD.containsKey(player.getUniqueId())) {
-                                    AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
-                                } else {
-                                    AnvilUtil.openRegisterAnvil(player);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    removeActiveCustomAnvil(uuid);
-                    ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
-                }
-                break;
-            }
-            case PacketType.Play.Client.CUSTOM_CLICK_ACTION: {
-                WrapperPlayClientCustomClickAction packet = new WrapperPlayClientCustomClickAction(e);
-                String id = packet.getId().toString();
-                boolean isLogin = id.equals(DialogUtil.LOGIN_DIALOG_ID);
-                boolean isRegister = id.equals(DialogUtil.REGISTER_DIALOG_ID);
-                if (isLogin || isRegister) {
-                    NBT nbt = packet.getPayload();
-                    if (nbt instanceof NBTCompound payload) {
-                        handleCustomClickAction(
-                                player,
-                                isLogin,
-                                payload.getBooleanOr("close", false),
-                                payload.getStringTagValueOrDefault("password", ""),
-                                payload.getStringTagValueOrDefault("confirm", "")
+                    if (isActiveCustomAnvil(uuid)) {
+                        ANVIL_INPUT.put(
+                                player.getUniqueId(),
+                                new WrapperPlayClientNameItem(e).getItemName()
                         );
+                        refreshCustomAnvil(player);
                     }
+                    break;
+                case CLICK_WINDOW: {
+                    WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(e);
+                    int windowId = packet.getWindowId();
+                    // 只处理我们的铁砧窗口
+                    if (!isCustomAnvil(windowId)) return;
+                    e.setCancelled(true);
+                    // TODO: 刷新时, slot 1 物品 Lore 恢复默认
+                    refreshCustomAnvil(player);
+
+                    boolean isLogin = windowId == AnvilUtil.WINDOW_ID_LOGIN;
+                    boolean isRegister = windowId == AnvilUtil.WINDOW_ID_REGISTER;
+                    int slot = packet.getSlot();
+                    if (slot == 0) {
+                        if (FlexLoginUI.config.getBoolean("pages.anvil.allow_close")) {
+                            ANVIL_MANUALLY_CLOSE.add(player.getUniqueId());
+                            user.closeInventory();
+                            sendPlayerReopen(player, isLogin);
+                        } else {
+                            Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> player.kickPlayer(
+                                    isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message")
+                            ));
+                        }
+
+                    }
+                    // 点击输出槽 2
+                    else if (slot == 2) {
+                        user.closeInventory();
+                        removeActiveCustomAnvil(uuid);
+                        String inputText = ANVIL_INPUT.get(uuid);
+                        if (inputText != null) {
+                            onPlayerSubmitLogin(player, inputText);
+                        }
+                        if (isRegister) {
+                            if (ANVIL_CONFIRM_PASSWORD.containsKey(uuid)) {
+                                onPlayerSubmitRegister(player, ANVIL_CONFIRM_PASSWORD.getOrDefault(uuid, ""), inputText);
+                                ANVIL_CONFIRM_PASSWORD.remove(uuid);
+                            } else {
+                                ANVIL_CONFIRM_PASSWORD.put(uuid, inputText);
+                                AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
+                            }
+                        }
+                    }
+                    Bukkit.getScheduler().runTask(FlexLoginUI.instance, player::updateInventory);
+                    break;
                 }
-                break;
+                case CLOSE_WINDOW: {
+                    int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
+                    if (isCustomAnvil(windowId)) {
+                        if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
+                            if (!ANVIL_MANUALLY_CLOSE.contains(player.getUniqueId())) {
+                                if (windowId == AnvilUtil.WINDOW_ID_LOGIN) {
+                                    AnvilUtil.openLoginAnvil(player);
+                                } else if (windowId == AnvilUtil.WINDOW_ID_REGISTER) {
+                                    if (ANVIL_CONFIRM_PASSWORD.containsKey(player.getUniqueId())) {
+                                        AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
+                                    } else {
+                                        AnvilUtil.openRegisterAnvil(player);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        removeActiveCustomAnvil(uuid);
+                        ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
+                    }
+                    break;
+                }
+                case CUSTOM_CLICK_ACTION: {
+                    WrapperPlayClientCustomClickAction packet = new WrapperPlayClientCustomClickAction(e);
+                    String id = packet.getId().toString();
+                    boolean isLogin = id.equals(DialogUtil.LOGIN_DIALOG_ID);
+                    boolean isRegister = id.equals(DialogUtil.REGISTER_DIALOG_ID);
+                    if (isLogin || isRegister) {
+                        NBT nbt = packet.getPayload();
+                        if (nbt instanceof NBTCompound payload) {
+                            handleCustomClickAction(
+                                    player,
+                                    isLogin,
+                                    payload.getBooleanOr("close", false),
+                                    payload.getStringTagValueOrDefault("password", ""),
+                                    payload.getStringTagValueOrDefault("confirm", "")
+                            );
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
             }
-            default:
-                break;
         }
     }
 
@@ -218,19 +233,90 @@ public class PacketListeners implements PacketListener, Listener {
         }
     }
 
+    public static <W extends WrapperCommonServerShowDialog<W>> boolean isAuthMeDialog(W wrapper) {
+        boolean isAuthMe = false;
+        if (wrapper.getDialog() instanceof MultiActionDialog dialog) {
+            List<ActionButton> buttons = dialog.getActions();
+            if (!buttons.isEmpty()) {
+                CommonDialogData commonDialogData = dialog.getCommon();
+                if (!commonDialogData.getBody().isEmpty() && !commonDialogData.getInputs().isEmpty()) {
+                    for (ActionButton button : buttons) {
+                        Action action = button.getAction();
+                        if (action instanceof DynamicRunCommandAction commandAction) {
+                            String template = commandAction.getTemplate().getRaw();
+                            if (template.startsWith("login ") || template.startsWith("register ")) {
+                                isAuthMe = true;
+                                break;
+                            }
+                        }
+                        if (action instanceof DynamicCustomAction customAction) {
+                            if (customAction.getId().getNamespace().equals("authme")) {
+                                isAuthMe = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return isAuthMe;
+    }
+
+    public static <W extends WrapperCommonServerShowDialog<W>> boolean isShouldCancelAuthMeDialog(Player player, W wrapper) {
+        if (isAuthMeDialog(wrapper)) {
+            return ViaVersionUtil.isLowVersion(player) || GeyserUtil.isBedrock(player);
+        }
+        return false;
+    }
+
     @Override
     public void onPacketSend(PacketSendEvent e) {
         Player player = e.getPlayer();
-        if (player == null) return;
+
         PacketTypeCommon packetType = e.getPacketType();
-        if (packetType == PacketType.Play.Server.OPEN_WINDOW) {
-            WrapperPlayServerOpenWindow wrapper = new WrapperPlayServerOpenWindow(e);
-            int windowId = wrapper.getContainerId();
-            if (isCustomAnvil(windowId)) {
-                addActiveCustomAnvil(player.getUniqueId(), windowId);
+        // player is null
+        if (packetType instanceof PacketType.Configuration.Server configServerType) {
+            User user = e.getUser();
+            if (configServerType.equals(PacketType.Configuration.Server.SHOW_DIALOG)) {
+                if (isAuthMeDialog(new WrapperConfigServerShowDialog(e))) {
+//                    System.out.println("Is AuthMe Config Dialog");
+//                    System.out.println(user.getClientVersion());
+//                    System.out.println(FloodgateApi.getInstance().isFloodgatePlayer(user.getUUID()));
+//                    System.out.println(FloodgateApi.getInstance().isFloodgateId(user.getUUID()));
+//                    System.out.println(GeyserApi.api().isBedrockPlayer(user.getUUID()));
+//                    System.out.println(GeyserApi.api().connectionByUuid(user.getUUID()));
+//                    if (user.getClientVersion().isOlderThan(ClientVersion.V_1_21_6) || GeyserUtil.isBedrock(user.getUUID())) {
+//                        e.setCancelled(true);
+//                    }
+                    if (user.getClientVersion().isOlderThan(ClientVersion.V_1_21_6)) {
+                        e.setCancelled(true);
+                    }
+                }
             }
         }
-//        Bukkit.getLogger().info("Packet send: " + e.getPacketType());
+
+        if (player == null) return;
+
+        if (packetType instanceof PacketType.Play.Server serverType) {
+            switch (serverType) {
+                case OPEN_WINDOW: {
+                    WrapperPlayServerOpenWindow wrapper = new WrapperPlayServerOpenWindow(e);
+                    int windowId = wrapper.getContainerId();
+                    if (isCustomAnvil(windowId)) {
+                        addActiveCustomAnvil(player.getUniqueId(), windowId);
+                    }
+                    break;
+                }
+                case SHOW_DIALOG: {
+                    if (isShouldCancelAuthMeDialog(player, new WrapperPlayServerShowDialog(e))) {
+                        e.setCancelled(true);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
     }
 
     @EventHandler
@@ -252,7 +338,7 @@ public class PacketListeners implements PacketListener, Listener {
 
     public static void handlePlayerUI(Player player, long delay) {
         if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-            if (ViaVersionUtil.shouldSendAnvil(player) || GeyserUtil.isBedrock(player)) {
+            if (ViaVersionUtil.isLowVersion(player) || GeyserUtil.isBedrock(player)) {
                 Bukkit.getScheduler().runTaskLater(FlexLoginUI.instance, () -> {
                     if (player.isOnline()) {
                         if (!authMeApi.isAuthenticated(player)) {
@@ -314,7 +400,7 @@ public class PacketListeners implements PacketListener, Listener {
             return;
         }
 
-        if (ViaVersionUtil.shouldSendAnvil(player)) {
+        if (ViaVersionUtil.isLowVersion(player)) {
             if (isLogin) {
                 AnvilUtil.openLoginAnvil(player, msg, false);
             } else if (isReg) {
@@ -357,7 +443,7 @@ public class PacketListeners implements PacketListener, Listener {
                         authMeApi.forceLogin(player);
                         player.sendMessage(DialogUtil.registerText("registration_successful"));
                         User user = getUser(player);
-                        if (ViaVersionUtil.shouldSendAnvil(player)) {
+                        if (ViaVersionUtil.isLowVersion(player)) {
                             if (user != null) {
                                 user.closeInventory();
                             }

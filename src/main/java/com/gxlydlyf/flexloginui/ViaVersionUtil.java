@@ -69,16 +69,8 @@ public class ViaVersionUtil {
     @SuppressWarnings("unchecked")
     public static boolean isLowVersion(Player player) {
         if (!enabled) {
-            return PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_6);
-        }
-        return Via.getAPI().getPlayerProtocolVersion(player).olderThan(ProtocolVersion.v1_21_6);
-    }
-
-    public static boolean shouldSendAnvil(Player player) {
-        if (enabled) {
-            return isLowVersion(player);
-        } else {
             return !DialogUtil.isHighServerVersion();
         }
+        return Via.getAPI().getPlayerProtocolVersion(player).olderThan(ProtocolVersion.v1_21_6);
     }
 }

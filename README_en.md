@@ -14,10 +14,13 @@ login.
 
 ### Required Dependencies
 
-- Java 21+
-- Server version 1.20+ (Only tested on PurpurMC)
-- [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/) (6.0.0 is not supported currently)
+- Java 17 or above
+- Server version 1.17 or above (Only tested on PurpurMC)
+- [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
+
+If you run a 1.17 server with Java 17 and get a prompt saying the Java version is too new, use PaperMC or PurpurMC
+instead, and add `-DPaper.IgnoreJavaVersion=true` to your startup command.
 
 ### Optional Dependencies
 
@@ -95,7 +98,8 @@ Open login interface
 
 Open registration interface
 
-To use the `/regui` and `/logui` commands, you need to add them to settings.restrictions.allowCommands in the AuthMe configuration.
+To use the `/regui` and `/logui` commands, you need to add them to settings.restrictions.allowCommands in the AuthMe
+configuration.
 
 ## Permissions
 

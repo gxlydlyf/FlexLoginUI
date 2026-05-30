@@ -8,6 +8,8 @@ import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.geyser.api.GeyserApi;
 
+import java.util.UUID;
+
 import static com.gxlydlyf.flexloginui.DialogUtil.loginText;
 import static com.gxlydlyf.flexloginui.DialogUtil.registerText;
 
@@ -24,9 +26,13 @@ public class GeyserUtil {
         return config.getBoolean("pages.bedrock.allow_close");
     }
 
-    public static boolean isBedrock(Player player) {
+    public static boolean isBedrock(UUID uuid) {
         if (!enabled) return false;
-        return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
+        return FloodgateApi.getInstance().isFloodgatePlayer(uuid);
+    }
+
+    public static boolean isBedrock(Player player) {
+        return isBedrock(player.getUniqueId());
     }
 
     public static void registerEventListener() {

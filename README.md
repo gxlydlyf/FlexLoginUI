@@ -11,11 +11,13 @@
 
 ### 必要依赖
 
-- Java 21+
-- 插件服务器 1.20+ （仅在 PurpurMC 经过测试）
+- Java 17 及以上
+- 插件服务器 1.17 及以上 （仅在 PurpurMC 经过测试）
 - [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
+若你使用 Java 17 运行 1.17 版本 的服务端并提示Java 版本过高，请改用 Paper
+MC 或 PurpurMC 服务端，并在启动命令中添加参数：`-DPaper.IgnoreJavaVersion=true`
 ### 可选依赖
 
 - [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为高于服务器版本客户端提供 Dialog 界面
