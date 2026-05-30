@@ -95,6 +95,8 @@ Open login interface
 
 Open registration interface
 
+To use the `/regui` and `/logui` commands, you need to add them to settings.restrictions.allowCommands in the AuthMe configuration.
+
 ## Permissions
 
 ### flexloginui.commands.*

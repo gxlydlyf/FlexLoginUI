@@ -92,6 +92,8 @@ settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.pr
 
 用于开启注册UI界面
 
+`/regui` 和 `/logui` 命令需要添加到 AuthMe 配置中 settings.restrictions.allowCommands 才能使用
+
 ## 权限
 
 ### flexloginui.commands.*

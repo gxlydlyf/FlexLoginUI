@@ -41,7 +41,7 @@ text:
       confirm: "Re-enter your password"
 pages:
   dialog:
-    horizontal_buttons: false
+    horizontal_buttons: true
     allow_close: false
   anvil:
     allow_close: false

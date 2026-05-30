@@ -54,8 +54,14 @@ public final class FlexLoginUI extends JavaPlugin {
         ViaVersionUtil.enabled = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
         if (ViaVersionUtil.enabled) {
             getLogger().info("Found ViaVersion!");
+
+            ViaBackwardsUtil.enabled = Bukkit.getPluginManager().isPluginEnabled("ViaBackwards");
+            if (ViaBackwardsUtil.enabled) {
+                getLogger().info("Found ViaBackwards!");
+            }
         }
         ViaVersionUtil.tryLoadHook();
+        ViaBackwardsUtil.tryLoadHook();
 
         getLogger().info("FlexLoginUI " + getDescription().getVersion() + " has been enabled!");
     }

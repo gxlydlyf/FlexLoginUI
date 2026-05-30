@@ -150,7 +150,7 @@ public class PacketListeners implements PacketListener, Listener {
                 Bukkit.getScheduler().runTask(FlexLoginUI.instance, player::updateInventory);
                 break;
             }
-            case PacketType.Play.Client.CLOSE_WINDOW:
+            case PacketType.Play.Client.CLOSE_WINDOW: {
                 int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
                 if (isCustomAnvil(windowId)) {
                     if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
@@ -171,6 +171,7 @@ public class PacketListeners implements PacketListener, Listener {
                     ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
                 }
                 break;
+            }
             case PacketType.Play.Client.CUSTOM_CLICK_ACTION: {
                 WrapperPlayClientCustomClickAction packet = new WrapperPlayClientCustomClickAction(e);
                 String id = packet.getId().toString();

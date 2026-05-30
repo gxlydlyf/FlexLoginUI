@@ -41,7 +41,7 @@ text:
       confirm: "请再次输入密码"
 pages:
   dialog:
-    horizontal_buttons: false
+    horizontal_buttons: true
     allow_close: false
   anvil:
     allow_close: false

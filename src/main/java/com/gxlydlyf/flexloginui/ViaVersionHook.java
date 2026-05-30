@@ -34,14 +34,14 @@ public class ViaVersionHook {
             });
             protocol.appendServerbound(ServerboundPackets1_21_6.CUSTOM_CLICK_ACTION, wrapper -> {
                 // 1. 读取 ID
-                Key identifier = wrapper.read(Types.IDENTIFIER);
+                Key identifier = wrapper.passthrough(Types.IDENTIFIER);
 
                 boolean isLogin = identifier.equals(DialogUtil.LOGIN_DIALOG_ID);
                 boolean isRegister = identifier.equals(DialogUtil.REGISTER_DIALOG_ID);
 
                 if (isLogin || isRegister) {
                     // 2. 读取 NBT
-                    Tag payloadTag = wrapper.read(Types.CUSTOM_CLICK_ACTION_TAG);
+                    Tag payloadTag = wrapper.passthrough(Types.CUSTOM_CLICK_ACTION_TAG);
 
                     // 核心：读取 password
                     if (payloadTag instanceof CompoundTag compound) { // 转成 CompoundTag

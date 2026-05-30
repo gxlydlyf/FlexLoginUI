@@ -6,7 +6,7 @@
 
     <groupId>com.gxlydlyf</groupId>
     <artifactId>FlexLoginUI</artifactId>
-    <version>1.1.0-beta</version>
+    <version>1.1.1-beta</version>
     <packaging>jar</packaging>
 
     <name>FlexLoginUI</name>
@@ -83,10 +83,6 @@
 
     <repositories>
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-        <repository>
             <id>codemc-repo</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
         </repository>
@@ -150,6 +146,12 @@
         <dependency>
             <groupId>com.viaversion</groupId>
             <artifactId>viaversion-common</artifactId>
+            <version>5.9.2-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.viaversion</groupId>
+            <artifactId>viabackwards-common</artifactId>
             <version>5.9.2-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
