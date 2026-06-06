@@ -167,7 +167,7 @@ The embedded [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library us
 ## Issues
 
 Please report bugs, feature requests or suggestions via [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) if you
-encounter runtime errors or have any requirements.
+encounter errors or have any requirements.
 
 ## Contributing
 
