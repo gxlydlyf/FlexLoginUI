@@ -33,8 +33,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.geysermc.floodgate.api.FloodgateApi;
-import org.geysermc.geyser.api.GeyserApi;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -279,15 +277,6 @@ public class PacketListeners implements PacketListener, Listener {
             User user = e.getUser();
             if (configServerType.equals(PacketType.Configuration.Server.SHOW_DIALOG)) {
                 if (isAuthMeDialog(new WrapperConfigServerShowDialog(e))) {
-//                    System.out.println("Is AuthMe Config Dialog");
-//                    System.out.println(user.getClientVersion());
-//                    System.out.println(FloodgateApi.getInstance().isFloodgatePlayer(user.getUUID()));
-//                    System.out.println(FloodgateApi.getInstance().isFloodgateId(user.getUUID()));
-//                    System.out.println(GeyserApi.api().isBedrockPlayer(user.getUUID()));
-//                    System.out.println(GeyserApi.api().connectionByUuid(user.getUUID()));
-//                    if (user.getClientVersion().isOlderThan(ClientVersion.V_1_21_6) || GeyserUtil.isBedrock(user.getUUID())) {
-//                        e.setCancelled(true);
-//                    }
                     if (user.getClientVersion().isOlderThan(ClientVersion.V_1_21_6)) {
                         e.setCancelled(true);
                     }

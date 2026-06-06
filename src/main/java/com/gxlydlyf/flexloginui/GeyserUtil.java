@@ -7,6 +7,7 @@ import org.geysermc.cumulus.form.CustomForm;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.event.EventRegistrar;
 
 import java.util.UUID;
 
@@ -37,14 +38,14 @@ public class GeyserUtil {
 
     public static void registerEventListener() {
         geyserListeners = new GeyserListeners();
-        GeyserApi.api().eventBus().register(geyserListeners, geyserListeners);
+        geyserListeners.register();
     }
 
     public static void unregisterEventListener() {
-        GeyserApi.api().eventBus().unregisterAll(geyserListeners);
+        GeyserApi.api().eventBus().unregisterAll((EventRegistrar) FlexLoginUI.instance);
     }
 
-    private static void sendForm(Player player, CustomForm.Builder formBuilder) {
+    public static void sendForm(Player player, CustomForm.Builder formBuilder) {
         FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
         Bukkit.getServer().getScheduler().runTaskLater(
                 FlexLoginUI.instance,
@@ -76,7 +77,7 @@ public class GeyserUtil {
         sendRegisterForm(player, registerText("tip"));
     }
 
-    private static CustomForm.Builder buildLoginForm(Player player, String tip) {
+    static CustomForm.Builder buildLoginForm(Player player, String tip) {
         return CustomForm.builder()
                 .title(loginText("title"))
                 .label(tip)
@@ -94,7 +95,7 @@ public class GeyserUtil {
                 .invalidResultHandler(response -> PacketListeners.openMessageUI(player, "log", response.errorMessage()));
     }
 
-    private static CustomForm.Builder buildRegisterForm(Player player, String tip) {
+    static CustomForm.Builder buildRegisterForm(Player player, String tip) {
         return CustomForm.builder()
                 .title(registerText("title"))
                 .label(tip)

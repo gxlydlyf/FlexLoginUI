@@ -17,6 +17,10 @@ public final class FlexLoginUI extends JavaPlugin {
     public static CommandExecutors commandExecutors;
     public static Logger logger;
 
+    public static boolean isDebug() {
+        return FlexLoginUI.config.isDebug();
+    }
+
     @Override
     public void onEnable() {
         // Plugin startup logic

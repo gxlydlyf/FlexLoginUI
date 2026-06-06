@@ -76,6 +76,12 @@ Visible for clients below 1.21.6
 ### Bedrock Form
 
 Available for players joining via Geyser
+
+If the server version is 1.21.6 or higher, AuthMeReloaded 6.0.0 or newer is in use, and
+settings.registration.dialog.preJoin.enable is enabled in the AuthMe configuration, Geyser will automatically convert
+the AuthMe pre-join registration dialog into a Bedrock Edition form. This plugin applies several styling modifications
+to the form, with all form text sourced from AuthMe.
+
 ![](images/en/bedrock/register.jpg)
 ![](images/en/bedrock/login.jpg)
 

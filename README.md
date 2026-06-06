@@ -18,6 +18,7 @@
 
 若你使用 Java 17 运行 1.17 版本 的服务端并提示Java 版本过高，请改用 Paper
 MC 或 PurpurMC 服务端，并在启动命令中添加参数：`-DPaper.IgnoreJavaVersion=true`
+
 ### 可选依赖
 
 - [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为高于服务器版本客户端提供 Dialog 界面
@@ -70,6 +71,10 @@ settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.pr
 ### 基岩版表单
 
 通过 Geyser 加入的用户可见
+
+如果服务器版本大于等于 1.21.6，并且使用 AuthMeReloaded 6.0.0 及以上版本，并且启用 AuthMe 配置中的
+settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 AuthMe
+预加入对话框 转化为 基岩版表单，此插件会对表单进行一些样式修改，表单中的文本将由 AuthMe 提供。
 
 ![](images/zh_CN/bedrock/register.jpg)
 ![](images/zh_CN/bedrock/login.jpg)
