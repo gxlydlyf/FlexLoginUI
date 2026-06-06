@@ -3,12 +3,12 @@
 # FlexLoginUI
 
 Graphical authentication plugin for AuthMeReloaded. Supports Anvil login, 1.21.6+ Dialog UI login and Geyser Bedrock
-form
-login.
+form login.
 
 > [!WARNING]
-> I may not have sufficient time for plugin development and testing. Issues reports are welcomed. Support for more login
-> plugins, Java versions and Minecraft versions may be added in future updates.
+> I may not have sufficient time for further plugin testing and development. Feel free to submit bug reports or feature
+> requests via [issues](https://github.com/gxlydlyf/FlexLoginUI/issues). Support for additional authentication plugins,
+> Java versions and Minecraft game versions may be added in future updates.
 
 ## Installation
 
@@ -166,7 +166,8 @@ The embedded [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library us
 
 ## Issues
 
-Submit bugs and suggestions at [issues](https://github.com/gxlydlyf/FlexLoginUI/issues).
+Please report bugs, feature requests or suggestions via [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) if you
+encounter runtime errors or have any requirements.
 
 ## Contributing
 

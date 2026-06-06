@@ -5,7 +5,8 @@
 用于 AuthMeReloaded 的图形化登录插件，支持铁砧登录、1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
 
 > [!WARNING]
-> 我可能没有足够的时间对此插件进行测试与开发，欢迎报告问题。将来可能会支持更多登录插件、Java版本 和 Minecraft版本
+> 我可能没有足够的时间对此插件进行测试与开发，欢迎在 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues)
+> 报告问题或请求功能。将来可能会支持更多登录插件、Java版本 和 Minecraft版本
 
 ## 安装
 
@@ -158,7 +159,7 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 ## 问题
 
-请到 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) 反馈。
+如使用时报错、需要新功能或提出建议，请到 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) 反馈。
 
 ## 贡献
 
