@@ -180,25 +180,21 @@ public class ConfigUtil extends ConfigAbstract {
         return getString("text.register." + key);
     }
 
-    @Override
-    protected int getLatestVersion() {
-        return 1;
+    public String getCaptchaText(String key) {
+        return getString("text.captcha." + key);
+    }
+
+
+    public String getRegCaptchaText(String key) {
+        return getCaptchaText("register." + key);
+    }
+
+    public String getLogCaptchaText(String key) {
+        return getCaptchaText("login." + key);
     }
 
     @Override
-    protected void registerMigrations() {
-        // 1 -> 2 升级时添加新字段，降级时删除
-//        addVersionStep(1, config -> {
-//            config.set("new-field", "默认值");
-//        }, config -> {
-//            config.set("new-field", null);
-//        });
-
-        // 2 -> 3 升级时修改某个值，降级时恢复（不支持降级则仅注册升级）
-//        addUpgradeStep(2, config -> {
-//            String old = config.getString("some-key");
-//            config.set("some-key", old + "_updated");
-//        });
-        // 注意：从 2 降级到 1 会抛出异常，因为未提供 downgradeAction
+    protected int getLatestVersion() {
+        return 2;
     }
 }

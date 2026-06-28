@@ -39,21 +39,31 @@ public class ViaVersionHook {
                 boolean isLogin = identifier.equals(DialogUtil.LOGIN_DIALOG_ID);
                 boolean isRegister = identifier.equals(DialogUtil.REGISTER_DIALOG_ID);
 
-                if (isLogin || isRegister) {
-                    // 2. 读取 NBT
-                    Tag payloadTag = wrapper.passthrough(Types.CUSTOM_CLICK_ACTION_TAG);
+                boolean isLogCaptcha = identifier.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID);
+                boolean isRegCaptcha = identifier.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID);
 
-                    // 核心：读取 password
-                    if (payloadTag instanceof CompoundTag compound) { // 转成 CompoundTag
-                        boolean close = compound.getBoolean("close", false);
+                // 2. 读取 NBT
+                Tag payloadTag = wrapper.passthrough(Types.CUSTOM_CLICK_ACTION_TAG);
+                // 核心：读取 password
+                if (payloadTag instanceof CompoundTag compound) { // 转成 CompoundTag
+                    boolean close = compound.getBoolean("close", false);
+                    Player player = getPlayer(wrapper.user());
+//                        System.out.println("Payload: " + payloadTag);
+                    if (isLogin || isRegister) {
                         PacketListeners.handleCustomClickAction(
-                                getPlayer(wrapper.user()),
+                                player,
                                 isLogin,
                                 close,
                                 compound.getString("password"),
                                 compound.getString("confirm")
                         );
-//                        System.out.println("Payload: " + payloadTag);
+                    } else if (isLogCaptcha || isRegCaptcha) {
+                        PacketListeners.handleCaptchaCustomClickAction(
+                                player,
+                                isLogCaptcha,
+                                close,
+                                compound.getString("captcha")
+                        );
                     }
                 }
 

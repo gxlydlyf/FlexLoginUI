@@ -24,7 +24,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCu
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientNameItem;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerShowDialog;
-import fr.xephi.authme.api.v3.AuthMeApi;
+import fr.xephi.authme.data.limbo.LimboMessageType;
 import fr.xephi.authme.message.MessageKey;
 import fr.xephi.authme.service.ValidationService;
 import org.bukkit.Bukkit;
@@ -33,54 +33,36 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.Nullable;
+import com.gxlydlyf.flexloginui.AnvilUtil.AnvilPageType;
+import com.gxlydlyf.flexloginui.AnvilUtil.AnvilPage;
 
 import java.util.*;
 
+import static com.gxlydlyf.flexloginui.CommandExecutors.authMeApi;
+
 public class PacketListeners implements PacketListener, Listener {
-    private static final HashMap<UUID, String> ANVIL_INPUT = new HashMap<>();
-    private static final HashMap<UUID, Integer> ACTIVE_CUSTOM_ANVIL = new HashMap<>();
-    private static final HashMap<UUID, String> ANVIL_CONFIRM_PASSWORD = new HashMap<>();
-    protected static final HashSet<UUID> ANVIL_MANUALLY_CLOSE = new HashSet<>();
-    private static final AuthMeApi authMeApi = AuthMeApi.getInstance();
-
-    public void addActiveCustomAnvil(UUID uuid, int windowId) {
-        ACTIVE_CUSTOM_ANVIL.put(uuid, windowId);
-    }
-
-    public void removeActiveCustomAnvil(UUID uuid) {
-        ACTIVE_CUSTOM_ANVIL.remove(uuid);
-    }
-
-    public Integer getActiveCustomAnvil(UUID uuid) {
-        return ACTIVE_CUSTOM_ANVIL.getOrDefault(uuid, null);
-    }
-
-    public boolean isActiveCustomLogin(UUID uuid) {
-        return getActiveCustomAnvil(uuid) == AnvilUtil.WINDOW_ID_LOGIN;
-    }
-
-    public boolean isActiveCustomRegister(UUID uuid) {
-        return getActiveCustomAnvil(uuid) == AnvilUtil.WINDOW_ID_REGISTER;
-    }
-
-    public boolean isActiveCustomAnvil(UUID uuid) {
-        return getActiveCustomAnvil(uuid) != null;
-    }
-
     public void refreshCustomAnvil(Player player) {
-        UUID uuid = player.getUniqueId();
-        if (isActiveCustomAnvil(uuid)) {
-            if (isActiveCustomLogin(uuid)) {
-                AnvilUtil.openLoginAnvil(player, true);
-            } else if (isActiveCustomRegister(uuid)) {
-                AnvilUtil.openRegisterAnvil(player, true);
-            }
+        if (AnvilUtil.isActiveAnvilPage(player)) {
+            AnvilUtil.getAnvilPage(player).restoreAnvilPage(player, true);
         }
     }
 
     public boolean isCustomAnvil(int windowId) {
-        return windowId == AnvilUtil.WINDOW_ID_LOGIN || windowId == AnvilUtil.WINDOW_ID_REGISTER;
+        return windowId == AnvilUtil.WINDOW_ID;
+    }
+
+    public static void kickPlayer(Player player, String msg) {
+        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> player.kickPlayer(msg));
+    }
+
+    public static void disallowCloseKick(Player player, boolean isLogin) {
+        kickPlayer(player, isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message"));
+    }
+
+    public static void disallowCloseKick(Player player, AnvilPage page) {
+        disallowCloseKick(player, page.isType(AnvilPageType.LOGIN) || page.isType(AnvilPageType.LOGIN_CAPTCHA));
     }
 
     @Override
@@ -92,28 +74,12 @@ public class PacketListeners implements PacketListener, Listener {
         User user = e.getUser();
         UUID uuid = player.getUniqueId();
 
-//        int packetId = e.getPacketId();
-
         PacketTypeCommon packetTypeCommon = e.getPacketType();
         if (packetTypeCommon instanceof PacketType.Play.Client clientType) {
             switch (clientType) {
                 case NAME_ITEM:
-//            Object buffer = e.getByteBuf();
-//
-//            // 1. 读取字符串长度（VarInt）
-//            int length = ByteBufHelper.readVarInt(buffer);
-//
-//            // 2. 读取字节数组
-//            byte[] bytes = new byte[length];
-//            ByteBufHelper.readBytes(buffer, bytes);
-//
-//            // 3. 转字符串
-//            String inputText = new String(bytes, StandardCharsets.UTF_8);
-                    if (isActiveCustomAnvil(uuid)) {
-                        ANVIL_INPUT.put(
-                                player.getUniqueId(),
-                                new WrapperPlayClientNameItem(e).getItemName()
-                        );
+                    if (AnvilUtil.isActiveAnvilPage(uuid)) {
+                        AnvilUtil.getAnvilPage(uuid).input = new WrapperPlayClientNameItem(e).getItemName();
                         refreshCustomAnvil(player);
                     }
                     break;
@@ -123,40 +89,46 @@ public class PacketListeners implements PacketListener, Listener {
                     // 只处理我们的铁砧窗口
                     if (!isCustomAnvil(windowId)) return;
                     e.setCancelled(true);
-                    // TODO: 刷新时, slot 1 物品 Lore 恢复默认
                     refreshCustomAnvil(player);
 
-                    boolean isLogin = windowId == AnvilUtil.WINDOW_ID_LOGIN;
-                    boolean isRegister = windowId == AnvilUtil.WINDOW_ID_REGISTER;
+                    AnvilPage anvilPage = AnvilUtil.getAnvilPage(uuid);
+
+                    boolean isLogin = anvilPage.isType(AnvilPageType.LOGIN);
+                    boolean isRegister = anvilPage.isType(AnvilPageType.REGISTER);
+                    boolean isLogCaptcha = anvilPage.isType(AnvilPageType.LOGIN_CAPTCHA);
+                    boolean isRegCaptcha = anvilPage.isType(AnvilPageType.REGISTER_CAPTCHA);
                     int slot = packet.getSlot();
                     if (slot == 0) {
                         if (FlexLoginUI.config.getBoolean("pages.anvil.allow_close")) {
-                            ANVIL_MANUALLY_CLOSE.add(player.getUniqueId());
+                            anvilPage.manuallyClose();
                             user.closeInventory();
                             sendPlayerReopen(player, isLogin);
                         } else {
-                            Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> player.kickPlayer(
-                                    isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message")
-                            ));
+                            disallowCloseKick(player, anvilPage);
                         }
-
                     }
                     // 点击输出槽 2
                     else if (slot == 2) {
                         user.closeInventory();
-                        removeActiveCustomAnvil(uuid);
-                        String inputText = ANVIL_INPUT.get(uuid);
+                        String inputText = anvilPage.input;
+
                         if (inputText != null) {
-                            onPlayerSubmitLogin(player, inputText);
-                        }
-                        if (isRegister) {
-                            if (ANVIL_CONFIRM_PASSWORD.containsKey(uuid)) {
-                                onPlayerSubmitRegister(player, ANVIL_CONFIRM_PASSWORD.getOrDefault(uuid, ""), inputText);
-                                ANVIL_CONFIRM_PASSWORD.remove(uuid);
-                            } else {
-                                ANVIL_CONFIRM_PASSWORD.put(uuid, inputText);
-                                AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
+                            if (isLogCaptcha) {
+                                onPlayerVerifyLogCaptcha(player, inputText);
+                            } else if (isRegCaptcha) {
+                                onPlayerVerifyRegCaptcha(player, inputText);
+                            } else if (isLogin) {
+                                onPlayerSubmitLogin(player, inputText);
+                            } else if (isRegister) {
+                                if (anvilPage.isRegConfirm()) {
+                                    onPlayerSubmitRegister(player, anvilPage.confirmPassword, inputText);
+                                } else {
+                                    anvilPage.confirmPassword = inputText;
+                                    AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
+                                }
                             }
+                        } else {
+                            anvilPage.restoreAnvilPage(player);
                         }
                     }
                     Bukkit.getScheduler().runTask(FlexLoginUI.instance, player::updateInventory);
@@ -166,21 +138,16 @@ public class PacketListeners implements PacketListener, Listener {
                     int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
                     if (isCustomAnvil(windowId)) {
                         if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-                            if (!ANVIL_MANUALLY_CLOSE.contains(player.getUniqueId())) {
-                                if (windowId == AnvilUtil.WINDOW_ID_LOGIN) {
-                                    AnvilUtil.openLoginAnvil(player);
-                                } else if (windowId == AnvilUtil.WINDOW_ID_REGISTER) {
-                                    if (ANVIL_CONFIRM_PASSWORD.containsKey(player.getUniqueId())) {
-                                        AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
-                                    } else {
-                                        AnvilUtil.openRegisterAnvil(player);
-                                    }
+                            AnvilPage anvilPage = AnvilUtil.getAnvilPage(uuid);
+                            if (!anvilPage.isManuallyClose()) {
+                                if (!player.isDead()) {
+                                    anvilPage.restoreAnvilPage(player);
+                                    break;
                                 }
-                                break;
                             }
                         }
-                        removeActiveCustomAnvil(uuid);
-                        ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
+                        AnvilUtil.closeAnvilPage(uuid);
+                        user.closeInventory();
                     }
                     break;
                 }
@@ -189,15 +156,25 @@ public class PacketListeners implements PacketListener, Listener {
                     String id = packet.getId().toString();
                     boolean isLogin = id.equals(DialogUtil.LOGIN_DIALOG_ID);
                     boolean isRegister = id.equals(DialogUtil.REGISTER_DIALOG_ID);
-                    if (isLogin || isRegister) {
-                        NBT nbt = packet.getPayload();
-                        if (nbt instanceof NBTCompound payload) {
+                    boolean isLogCaptcha = id.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID);
+                    boolean isRegCaptcha = id.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID);
+                    NBT nbt = packet.getPayload();
+                    if (nbt instanceof NBTCompound payload) {
+                        boolean close = payload.getBooleanOr("close", false);
+                        if (isLogin || isRegister) {
                             handleCustomClickAction(
                                     player,
                                     isLogin,
-                                    payload.getBooleanOr("close", false),
+                                    close,
                                     payload.getStringTagValueOrDefault("password", ""),
                                     payload.getStringTagValueOrDefault("confirm", "")
+                            );
+                        } else if (isLogCaptcha || isRegCaptcha) {
+                            handleCaptchaCustomClickAction(
+                                    player,
+                                    isLogCaptcha,
+                                    close,
+                                    payload.getStringTagValueOrDefault("captcha", "")
                             );
                         }
                     }
@@ -215,19 +192,33 @@ public class PacketListeners implements PacketListener, Listener {
 
     public static void handleCustomClickAction(Player player, boolean isLogin, boolean close, String password, String confirm) {
         if (close) {
-            if (DialogUtil.allowClose()) {
-                sendPlayerReopen(player, isLogin);
-            } else {
-                Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> player.kickPlayer(
-                        isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message")
-                ));
-            }
+            handleCloseAction(player, isLogin);
         } else {
             if (isLogin) {
-                PacketListeners.onPlayerSubmitLogin(player, password);
+                onPlayerSubmitLogin(player, password);
             } else {
-                PacketListeners.onPlayerSubmitRegister(player, password, confirm);
+                onPlayerSubmitRegister(player, password, confirm);
             }
+        }
+    }
+
+    public static void handleCaptchaCustomClickAction(Player player, boolean isLogin, boolean close, String code) {
+        if (close) {
+            handleCloseAction(player, isLogin);
+        } else {
+            if (isLogin) {
+                onPlayerVerifyLogCaptcha(player, code);
+            } else {
+                onPlayerVerifyRegCaptcha(player, code);
+            }
+        }
+    }
+
+    private static void handleCloseAction(Player player, boolean isLogin) {
+        if (DialogUtil.allowClose()) {
+            sendPlayerReopen(player, isLogin);
+        } else {
+            disallowCloseKick(player, isLogin);
         }
     }
 
@@ -292,7 +283,7 @@ public class PacketListeners implements PacketListener, Listener {
                     WrapperPlayServerOpenWindow wrapper = new WrapperPlayServerOpenWindow(e);
                     int windowId = wrapper.getContainerId();
                     if (isCustomAnvil(windowId)) {
-                        addActiveCustomAnvil(player.getUniqueId(), windowId);
+                        AnvilUtil.createAnvilPage(player.getUniqueId());
                     }
                     break;
                 }
@@ -312,11 +303,7 @@ public class PacketListeners implements PacketListener, Listener {
     public void onPlayerQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
         if (player != null) {
-            removeActiveCustomAnvil(player.getUniqueId());
-            ANVIL_INPUT.remove(player.getUniqueId());
-            ACTIVE_CUSTOM_ANVIL.remove(player.getUniqueId());
-            ANVIL_CONFIRM_PASSWORD.remove(player.getUniqueId());
-            ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
+            AnvilUtil.closeAnvilPage(player.getUniqueId());
         }
     }
 
@@ -325,33 +312,95 @@ public class PacketListeners implements PacketListener, Listener {
         handlePlayerUI(e.getPlayer(), 5L);// 延迟 5 tick
     }
 
-    public static void handlePlayerUI(Player player, long delay) {
-        if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-            if (ViaVersionUtil.isLowVersion(player) || GeyserUtil.isBedrock(player)) {
-                Bukkit.getScheduler().runTaskLater(FlexLoginUI.instance, () -> {
-                    if (player.isOnline()) {
-                        if (!authMeApi.isAuthenticated(player)) {
-                            boolean isReg = authMeApi.isRegistered(player.getName());
-                            if (GeyserUtil.isBedrock(player)) {
-                                if (isReg) {
-                                    GeyserUtil.sendLoginForm(player);
-                                } else {
-                                    GeyserUtil.sendRegisterForm(player);
-                                }
+    @EventHandler
+    public void onPlayerSpawn(PlayerRespawnEvent e) {
+        handlePlayerUI(e.getPlayer(), 1L);
+    }
+
+    public static void handlePlayerCaptcha(Player player, String msg, long delay) {
+        String name = player.getName();
+        Bukkit.getScheduler().runTaskLater(FlexLoginUI.instance, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
+                if (ViaVersionUtil.isLowVersion(player) || GeyserUtil.isBedrock(player)) {
+                    boolean isLogin = authMeApi.isRegistered(name);
+                    boolean isBedrock = GeyserUtil.isBedrock(player);
+                    if (isBedrock && GeyserUtil.hasOpenForm(player)) {
+                        return;
+                    }
+                    if (isLogin) {
+                        if (AuthMeUtil.isLoginCaptchaRequired(name)) {
+                            String tip = AuthMeUtil.getLogCaptchaTip(player, msg);
+                            if (isBedrock) {
+                                GeyserUtil.sendLogCaptchaForm(player, tip);
                             } else {
-                                if (isReg) {
-                                    AnvilUtil.openLoginAnvil(player);
-                                } else {
-                                    AnvilUtil.openRegisterAnvil(player);
-                                }
+                                AnvilUtil.openLogCaptchaAnvil(player, tip);
+                            }
+                        }
+                    } else {
+                        if (AuthMeUtil.isRegisterCaptchaRequired(name)) {
+                            String tip = AuthMeUtil.getRegCaptchaTip(player, msg);
+                            if (isBedrock) {
+                                GeyserUtil.sendRegCaptchaForm(player, tip);
+                            } else {
+                                AnvilUtil.openRegCaptchaAnvil(player, tip);
                             }
                         }
                     }
-                }, delay);
-            } else if (DialogUtil.isHighServerVersion() || ViaVersionUtil.enabled) {
-                handlePlayerDialog(player);
+                } else if (DialogUtil.isHighServerVersion() || ViaVersionUtil.enabled) {
+                    handlePlayerCaptchaDialog(player, msg);
+                }
             }
-        }
+        }, delay);
+    }
+
+    public static void handlePlayerCaptcha(Player player, String msg) {
+        handlePlayerCaptcha(player, msg, 0L);
+    }
+
+    public static void handlePlayerCaptcha(Player player, long delay) {
+        handlePlayerCaptcha(player, null, delay);
+    }
+
+
+    public static void handlePlayerCaptcha(Player player) {
+        handlePlayerCaptcha(player, 0L);
+    }
+
+    public static void handlePlayerUI(Player player, long delay) {
+        Bukkit.getScheduler().runTaskLater(FlexLoginUI.instance, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            if (AuthMeUtil.isCaptchaRequired(player)) {
+                handlePlayerCaptcha(player);
+                return;
+            }
+            if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
+                if (ViaVersionUtil.isLowVersion(player) || GeyserUtil.isBedrock(player)) {
+                    boolean isLogin = authMeApi.isRegistered(player.getName());
+                    if (GeyserUtil.isBedrock(player)) {
+                        if (!GeyserUtil.hasOpenForm(player)) {
+                            if (isLogin) {
+                                GeyserUtil.sendLoginForm(player);
+                            } else {
+                                GeyserUtil.sendRegisterForm(player);
+                            }
+                        }
+                    } else {
+                        if (isLogin) {
+                            AnvilUtil.openLoginAnvil(player);
+                        } else {
+                            AnvilUtil.openRegisterAnvil(player);
+                        }
+                    }
+                } else if (DialogUtil.isHighServerVersion() || ViaVersionUtil.enabled) {
+                    handlePlayerDialog(player);
+                }
+            }
+        }, delay);
     }
 
     public static void handlePlayerUI(Player player) {
@@ -360,6 +409,10 @@ public class PacketListeners implements PacketListener, Listener {
 
     // 低版本服务器如果在 Join 事件马上发包, dialog 会马上关闭
     public static void handlePlayerDialog(Player player) {
+        if (AuthMeUtil.isCaptchaRequired(player)) {
+            handlePlayerCaptchaDialog(player);
+            return;
+        }
         if (authMeApi.isUnrestricted(player) ||
                 authMeApi.isAuthenticated(player) ||
                 GeyserUtil.isBedrock(player) ||
@@ -376,14 +429,44 @@ public class PacketListeners implements PacketListener, Listener {
         }
     }
 
-    public static void openMessageUI(Player player, String type, String msg) {
-        boolean isLogin = Objects.equals(type, "log");
-        boolean isReg = Objects.equals(type, "reg");
+    public static void handlePlayerCaptchaDialog(Player player, String msg) {
+        if (authMeApi.isUnrestricted(player) ||
+                authMeApi.isAuthenticated(player) ||
+                GeyserUtil.isBedrock(player) ||
+                AuthMeUtil.isEnabledAuthMeDialog()) {
+            return;
+        }
 
+        String name = player.getName();
+        if (authMeApi.isRegistered(name)) {
+            if (!authMeApi.isAuthenticated(player)) {
+                if (AuthMeUtil.isLoginCaptchaRequired(name)) {
+                    DialogUtil.sendLogCaptchaDialog(player, AuthMeUtil.getLogCaptchaTip(player, msg));
+                }
+            }
+        } else {
+            if (AuthMeUtil.isRegisterCaptchaRequired(name)) {
+                DialogUtil.sendRegCaptchaDialog(player, AuthMeUtil.getRegCaptchaTip(player, msg));
+            }
+        }
+    }
+
+    public static void handlePlayerCaptchaDialog(Player player) {
+        handlePlayerCaptchaDialog(player, null);
+    }
+
+    public static void openMessageUI(Player player, boolean isLogin, String msg) {
+        if (AuthMeUtil.isCaptchaRequired(player)) {
+            handlePlayerCaptcha(player, msg);
+            return;
+        }
         if (GeyserUtil.isBedrock(player)) {
+            if (GeyserUtil.hasOpenForm(player)) {
+                return;
+            }
             if (isLogin) {
                 GeyserUtil.sendLoginForm(player, msg);
-            } else if (isReg) {
+            } else {
                 GeyserUtil.sendRegisterForm(player, msg);
             }
             return;
@@ -392,58 +475,121 @@ public class PacketListeners implements PacketListener, Listener {
         if (ViaVersionUtil.isLowVersion(player)) {
             if (isLogin) {
                 AnvilUtil.openLoginAnvil(player, msg, false);
-            } else if (isReg) {
+            } else {
                 AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("please_reset_password") + msg, false);
             }
             player.sendMessage(msg);
         } else {
             if (isLogin) {
                 DialogUtil.sendLoginDialog(player, msg);
-            } else if (isReg) {
+            } else {
                 DialogUtil.sendRegisterDialog(player, msg);
             }
         }
     }
 
     public static void onPlayerSubmitLogin(Player player, String password) {
-        if (authMeApi.isRegistered(player.getName())) {
+        String name = player.getName();
+        if (authMeApi.isRegistered(name)) {
             if (!authMeApi.isAuthenticated(player)) {
-                if (authMeApi.checkPassword(player.getName(), password)) {
+                if (authMeApi.checkPassword(name, password)) {
                     authMeApi.forceLogin(player);
+                    if (ViaVersionUtil.isLowVersion(player)) {
+                        AnvilUtil.closeAnvilPage(player);
+                        User user = getUser(player);
+                        if (user != null) {
+                            user.closeInventory();
+                        }
+                    }
                 } else {
-                    openMessageUI(player, "log", DialogUtil.loginText("password_error"));
+                    if (AuthMeUtil.kickOnWrongPassword()) {
+                        kickPlayer(player, DialogUtil.loginText("password_error"));
+                        return;
+                    }
+                    if (AuthMeUtil.useTempban()) {
+                        AuthMeUtil.increaseTempbanCount(player);
+                        if (AuthMeUtil.shouldTempban(player)) {
+                            AuthMeUtil.tempbanPlayer(player);
+                            return;
+                        }
+                    }
+                    if (AuthMeUtil.useLoginFailureCaptcha()) {
+                        AuthMeUtil.increaseLoginFailureCount(name);
+                        if (AuthMeUtil.isLoginCaptchaRequired(name)) {
+                            AuthMeUtil.muteMessageTask(player);
+                            AuthMeUtil.sendMessage(player, MessageKey.USAGE_CAPTCHA,
+                                    AuthMeUtil.getLoginCaptcha(name));
+                        }
+                    }
+                    openMessageUI(player, true, DialogUtil.loginText("password_error"));
                 }
             }
         }
     }
 
     public static void onPlayerSubmitRegister(Player player, String password, String confirm) {
-        if (!authMeApi.isRegistered(player.getName())) {
+        String name = player.getName();
+        if (!authMeApi.isRegistered(name)) {
+            AnvilUtil.getAnvilPage(player).clearConfirm();
             if (password.equals(confirm)) {
                 ValidationService validationService = AuthMeUtil.validationService;
                 fr.xephi.authme.message.Messages messages = AuthMeUtil.messages;
                 ValidationService.ValidationResult validationResult = validationService.validatePassword(password, player.getName());
-                if (validationResult.hasError()) {
+                if (password.isEmpty()) {
+                    openMessageUI(player, false, messages.retrieveSingle(player, MessageKey.PASSWORD_UNSAFE_ERROR));
+                } else if (validationResult.hasError()) {
                     MessageKey errorKey = validationResult.getMessageKey();
                     String singleMessage = messages.retrieveSingle(player, errorKey, validationResult.getArgs());
-                    openMessageUI(player, "reg", singleMessage);
+                    openMessageUI(player, false, singleMessage);
                 } else {
-                    if (authMeApi.registerPlayer(player.getName(), password)) {
+                    if (authMeApi.registerPlayer(name, password)) {
                         authMeApi.forceLogin(player);
                         player.sendMessage(DialogUtil.registerText("registration_successful"));
-                        User user = getUser(player);
                         if (ViaVersionUtil.isLowVersion(player)) {
+                            User user = getUser(player);
                             if (user != null) {
                                 user.closeInventory();
                             }
+                            AnvilUtil.closeAnvilPage(player);
                         }
                     } else {
-                        openMessageUI(player, "reg", DialogUtil.registerText("registration_failed"));
+                        openMessageUI(player, false, DialogUtil.registerText("registration_failed"));
                     }
                 }
             } else {
-                openMessageUI(player, "reg", DialogUtil.registerText("password_not_match"));
+                openMessageUI(player, false, DialogUtil.registerText("password_not_match"));
             }
+        }
+    }
+
+    public static void onPlayerVerifyLogCaptcha(Player player, String code) {
+        String name = player.getName();
+        if (AuthMeUtil.isLoginCaptchaRequired(name)) {
+            if (AuthMeUtil.checkLoginCaptcha(player, code)) {
+                AuthMeUtil.sendMessage(player, MessageKey.CAPTCHA_SUCCESS);
+                AuthMeUtil.sendMessage(player, MessageKey.LOGIN_MESSAGE);
+                AuthMeUtil.unmuteMessageTask(player);
+                handlePlayerUI(player);
+            } else {
+                AuthMeUtil.sendMessage(player, MessageKey.CAPTCHA_WRONG_ERROR, AuthMeUtil.getLoginCaptcha(name));
+                handlePlayerCaptcha(player, DialogUtil.logCaptchaText("invalid"));
+            }
+        }
+    }
+
+
+    public static void onPlayerVerifyRegCaptcha(Player player, String code) {
+        String name = player.getName();
+        if (AuthMeUtil.isRegisterCaptchaRequired(name)) {
+            if (AuthMeUtil.checkRegisterCaptcha(player, code)) {
+                AuthMeUtil.sendMessage(player, MessageKey.REGISTER_CAPTCHA_SUCCESS);
+                AuthMeUtil.sendMessage(player, MessageKey.REGISTER_MESSAGE);
+                handlePlayerUI(player);
+            } else {
+                AuthMeUtil.sendMessage(player, MessageKey.CAPTCHA_WRONG_ERROR, AuthMeUtil.getRegisterCaptcha(name));
+                handlePlayerCaptcha(player, DialogUtil.regCaptchaText("invalid"));
+            }
+            AuthMeUtil.resetMessageTask(player, LimboMessageType.REGISTER);
         }
     }
 

@@ -2,7 +2,10 @@
 
 # FlexLoginUI
 
-用于 AuthMeReloaded 的图形化登录插件，支持铁砧登录、1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
+用于 AuthMeReloaded 的图形化认证插件，支持铁砧登录、客户端 1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
+
+谁需要此插件：使用 AuthMeReloaded 做登录验证、想要跨版本认证界面、想要给Java版玩家提供铁砧/对话框登录界面、给 Geyser
+基岩版玩家提供登录表单的 Minecraft 服务端服主会使用该插件。
 
 > [!WARNING]
 > 我可能没有足够的时间对此插件进行测试与开发，欢迎在 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues)

@@ -1,5 +1,5 @@
 # == DO NOT EDIT config-version ==
-config-version: 1
+config-version: 2
 # == DO NOT EDIT config-version ==
 
 debug: false
@@ -39,6 +39,24 @@ text:
     register:
       password: "Set your password"
       confirm: "Re-enter your password"
+  captcha:
+    # Use %captcha_code% as the placeholder for captcha code
+    register:
+      tip:
+        - "§7Enter the captcha code to proceed with registration: "
+        - "§c%captcha_code%"
+      title: Verification
+      label: Captcha
+      verify: Verify
+      invalid: §cInvalid captcha code
+    login:
+      tip:
+        - "§7Enter the captcha code to proceed with login: "
+        - "§c%captcha_code%"
+      title: Verification
+      label: Captcha
+      verify: Verify
+      invalid: §cInvalid captcha code
 pages:
   dialog:
     horizontal_buttons: true

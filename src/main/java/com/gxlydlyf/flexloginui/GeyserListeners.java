@@ -25,15 +25,18 @@ public class GeyserListeners implements EventRegistrar {
 
     @Subscribe
     public void onPlayerJoin(SessionJoinEvent event) {
+        if (event.connection().hasFormOpen()) {
+            return;
+        }
         UUID uuid = event.connection().playerUuid();
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) {
             if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-                boolean isReg = authMeApi.isRegistered(event.connection().name());
-                if (isReg) {
-                    GeyserUtil.sendRegisterForm(player);
-                } else {
+                boolean isLogin = authMeApi.isRegistered(event.connection().name());
+                if (isLogin) {
                     GeyserUtil.sendLoginForm(player);
+                } else {
+                    GeyserUtil.sendRegisterForm(player);
                 }
             }
         }

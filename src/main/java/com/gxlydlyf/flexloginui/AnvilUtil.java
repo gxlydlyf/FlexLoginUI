@@ -21,20 +21,19 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static com.gxlydlyf.flexloginui.DialogUtil.loginText;
-import static com.gxlydlyf.flexloginui.DialogUtil.registerText;
+import static com.gxlydlyf.flexloginui.DialogUtil.*;
 import static com.gxlydlyf.flexloginui.PacketListeners.getUser;
 
 
 public class AnvilUtil {
     // ====================== 固定常量 ======================
-    public static final int WINDOW_ID_LOGIN = 58;
-    public static final int WINDOW_ID_REGISTER = 59;
+    public static final int WINDOW_ID = 58;
     private static int ANVIL_WINDOW_TYPE = 7;
     private static final int STATE_ID = 0;
+    public static final ConcurrentHashMap<UUID, AnvilPage> OPENED_ANVIL = new ConcurrentHashMap<>();
 
     public static void setAnvilWindowType() {
         ServerVersion version = PacketEvents.getAPI().getServerManager().getVersion();
@@ -46,6 +45,99 @@ public class AnvilUtil {
             ANVIL_WINDOW_TYPE = 7;
         }
     }
+
+    public enum AnvilPageType {
+        REGISTER,
+        LOGIN,
+        REGISTER_CAPTCHA,
+        LOGIN_CAPTCHA
+    }
+
+    public static class AnvilPage {
+        private AnvilPageType type;
+        public String input = "";
+        public String confirmPassword = null;
+        private boolean manuallyClose = false;
+        public String tip = "";
+
+        public boolean hasType() {
+            return type != null;
+        }
+
+        public boolean isRegConfirm() {
+            return isType(AnvilPageType.REGISTER) && confirmPassword != null;
+        }
+
+        public void clearConfirm() {
+            confirmPassword = null;
+        }
+
+        public boolean isType(AnvilPageType type) {
+            return this.type == type;
+        }
+
+        public void manuallyClose(boolean manuallyClose) {
+            this.manuallyClose = manuallyClose;
+        }
+
+        public void manuallyClose() {
+            manuallyClose(true);
+        }
+
+        public boolean isManuallyClose() {
+            return manuallyClose;
+        }
+
+        public void restoreAnvilPage(Player player, boolean refresh) {
+            if (isType(AnvilPageType.LOGIN)) {
+                AnvilUtil.openLoginAnvil(player, tip, refresh);
+            } else if (isType(AnvilPageType.REGISTER)) {
+                AnvilUtil.openRegisterAnvil(player, tip, refresh);
+            } else if (isType(AnvilPageType.LOGIN_CAPTCHA)) {
+                AnvilUtil.openLogCaptchaAnvil(player, tip, refresh);
+            } else if (isType(AnvilPageType.REGISTER_CAPTCHA)) {
+                AnvilUtil.openRegCaptchaAnvil(player, tip, refresh);
+            }
+        }
+
+        public void restoreAnvilPage(Player player) {
+            restoreAnvilPage(player, false);
+        }
+
+        public void setType(AnvilPageType type) {
+            this.type = type;
+        }
+    }
+
+    public static void createAnvilPage(UUID uuid) {
+        OPENED_ANVIL.computeIfAbsent(uuid, k -> new AnvilPage());
+    }
+
+    public static void closeAnvilPage(UUID uuid) {
+        OPENED_ANVIL.remove(uuid);
+    }
+
+    public static void closeAnvilPage(Player player) {
+        OPENED_ANVIL.remove(player.getUniqueId());
+    }
+
+    public static AnvilPage getAnvilPage(UUID uuid) {
+        createAnvilPage(uuid);
+        return OPENED_ANVIL.get(uuid);
+    }
+
+    public static AnvilPage getAnvilPage(Player player) {
+        return getAnvilPage(player.getUniqueId());
+    }
+
+    public static boolean isActiveAnvilPage(UUID uuid) {
+        return OPENED_ANVIL.containsKey(uuid);
+    }
+
+    public static boolean isActiveAnvilPage(Player player) {
+        return isActiveAnvilPage(player.getUniqueId());
+    }
+
 
     // ====================== 最通用：打开自定义铁砧 UI ======================
 
@@ -64,6 +156,11 @@ public class AnvilUtil {
                                  ItemStack rightItem,
                                  ItemStack outputItem,
                                  int windowId, boolean refresh) {
+        AnvilPage page = getAnvilPage(player.getUniqueId());
+        if (page != null) {
+            page.manuallyClose(false);
+        }
+
         User user = getUser(player);
         if (user == null) {
             return;
@@ -87,8 +184,6 @@ public class AnvilUtil {
                 ItemStack.EMPTY
         );
         user.sendPacket(items);
-
-        PacketListeners.ANVIL_MANUALLY_CLOSE.remove(player.getUniqueId());
     }
 
     public static void closeAnvil(Player player, int windowId) {
@@ -99,11 +194,11 @@ public class AnvilUtil {
     }
 
     public static void closeRegisterAnvil(Player player) {
-        closeAnvil(player, WINDOW_ID_REGISTER);
+        closeAnvil(player, WINDOW_ID);
     }
 
     public static void closeLoginAnvil(Player player) {
-        closeAnvil(player, WINDOW_ID_LOGIN);
+        closeAnvil(player, WINDOW_ID);
     }
 
     public static boolean allowClose() {
@@ -118,16 +213,33 @@ public class AnvilUtil {
         return allowClose() ? registerText("close_button") : registerText("exit_button");
     }
 
-    // ====================== 快捷方法：打开 登录 UI ======================
-    public static void openLoginAnvil(Player player, String msg, boolean refresh) {
-        ItemStack left = createItem(ItemTypes.REDSTONE, "", List.of(getLoginCloseButtonText()));
-        ItemStack right = createItem(ItemTypes.PAPER, loginText("title"), List.of(msg));
-        ItemStack output = createItem(ItemTypes.ARROW, loginText("login_button"), null);
-        String title = loginText("title");
-        if (!msg.isEmpty()) {
-            title = title + "-" + msg;
+    public static void openCommonAnvil(Player player,
+                                       AnvilPageType pageType,
+                                       boolean refresh,
+                                       String title,
+                                       String closeText,
+                                       String msg,
+                                       String submitText) {
+        if (msg == null) {
+            msg = "";
         }
-        openAnvil(player, Component.text(title), left, right, output, WINDOW_ID_LOGIN, refresh);
+        ItemStack left = createItem(ItemTypes.REDSTONE, "", List.of(closeText));
+        ItemStack right = createItem(ItemTypes.PAPER, title, List.of(msg.split("\n")));
+        ItemStack output = createItem(ItemTypes.ARROW, submitText, null);
+        if (!msg.isEmpty()) {
+            title = title + "-" + msg.replace("\n", " ");
+        }
+        openAnvil(player, Component.text(title), left, right, output, WINDOW_ID, refresh);
+
+        AnvilPage page = getAnvilPage(player.getUniqueId());
+        page.setType(pageType);
+        page.tip = msg;
+    }
+
+    // 打开 登录 UI
+    public static void openLoginAnvil(Player player, String msg, boolean refresh) {
+        openCommonAnvil(player, AnvilPageType.LOGIN, refresh, loginText("title"),
+                getLoginCloseButtonText(), msg, loginText("login_button"));
     }
 
     public static void openLoginAnvil(Player player) {
@@ -138,17 +250,10 @@ public class AnvilUtil {
         openLoginAnvil(player, loginText("tip"), refresh);
     }
 
-    // ====================== 快捷方法：打开 注册 UI ======================
-
+    // 打开 注册 UI
     public static void openRegisterAnvil(Player player, String msg, boolean refresh) {
-        ItemStack left = createItem(ItemTypes.REDSTONE, "", List.of(getRegisterCloseButtonText()));
-        ItemStack right = createItem(ItemTypes.PAPER, registerText("title"), List.of(msg));
-        ItemStack output = createItem(ItemTypes.ARROW, registerText("register_button"), null);
-        String title = registerText("title");
-        if (!msg.isEmpty()) {
-            title = title + "-" + msg;
-        }
-        openAnvil(player, Component.text(title), left, right, output, WINDOW_ID_REGISTER, refresh);
+        openCommonAnvil(player, AnvilPageType.REGISTER, refresh, registerText("title"),
+                getRegisterCloseButtonText(), msg, registerText("register_button"));
     }
 
     public static void openRegisterAnvil(Player player) {
@@ -157,6 +262,24 @@ public class AnvilUtil {
 
     public static void openRegisterAnvil(Player player, boolean refresh) {
         openRegisterAnvil(player, registerText("tip_password"), refresh);
+    }
+
+    public static void openLogCaptchaAnvil(Player player, String msg, boolean refresh) {
+        openCommonAnvil(player, AnvilPageType.LOGIN_CAPTCHA, refresh, logCaptchaText("title"),
+                getLoginCloseButtonText(), msg, logCaptchaText("verify"));
+    }
+
+    public static void openLogCaptchaAnvil(Player player, String msg) {
+        openLogCaptchaAnvil(player, msg, false);
+    }
+
+    public static void openRegCaptchaAnvil(Player player, String msg, boolean refresh) {
+        openCommonAnvil(player, AnvilPageType.REGISTER_CAPTCHA, refresh, regCaptchaText("title"),
+                getRegisterCloseButtonText(), msg, regCaptchaText("verify"));
+    }
+
+    public static void openRegCaptchaAnvil(Player player, String msg) {
+        openRegCaptchaAnvil(player, msg, false);
     }
 
     // ====================== 通用物品构建器（核心） ======================
@@ -173,6 +296,7 @@ public class AnvilUtil {
     public static ItemStack createItem(ItemType type, String name, List<String> loreList) {
         ItemStack item = ItemStack.builder().type(type).amount(1).build();
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20_5)) {
+            // 新数据组件
             // 设置物品名称
             if (name != null) {
                 Component nameComponent = newTextComponent(name);
@@ -188,6 +312,7 @@ public class AnvilUtil {
                 item.setComponent(ComponentTypes.LORE, new ItemLore(loreComponents));
             }
         } else {
+            // 旧 NBT
             NBTCompound root = item.getOrCreateTag();
             NBTCompound display = new NBTCompound();
 

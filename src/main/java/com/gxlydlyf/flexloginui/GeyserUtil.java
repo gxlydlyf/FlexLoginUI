@@ -7,12 +7,12 @@ import org.geysermc.cumulus.form.CustomForm;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.event.EventRegistrar;
 
 import java.util.UUID;
 
-import static com.gxlydlyf.flexloginui.DialogUtil.loginText;
-import static com.gxlydlyf.flexloginui.DialogUtil.registerText;
+import static com.gxlydlyf.flexloginui.DialogUtil.*;
 
 public class GeyserUtil {
     public static boolean enabled = false;
@@ -43,6 +43,14 @@ public class GeyserUtil {
 
     public static void unregisterEventListener() {
         GeyserApi.api().eventBus().unregisterAll((EventRegistrar) FlexLoginUI.instance);
+    }
+
+    public static GeyserConnection getConnection(UUID uuid) {
+        return GeyserApi.api().connectionByUuid(uuid);
+    }
+
+    public static boolean hasOpenForm(Player player) {
+        return getConnection(player.getUniqueId()).hasFormOpen();
     }
 
     public static void sendForm(Player player, CustomForm.Builder formBuilder) {
@@ -77,22 +85,34 @@ public class GeyserUtil {
         sendRegisterForm(player, registerText("tip"));
     }
 
+    public static void sendLogCaptchaForm(Player player, String tip) {
+        sendForm(player, buildLogCaptchaForm(player, tip));
+    }
+
+    public static void sendRegCaptchaForm(Player player, String tip) {
+        sendForm(player, buildRegCaptchaForm(player, tip));
+    }
+
+    public static void handleClose(Player player, boolean isLogin) {
+        if (player.isDead()) {
+            return;
+        }
+        if (allowClose()) {
+            PacketListeners.sendPlayerReopen(player, isLogin);
+        } else {
+            PacketListeners.disallowCloseKick(player, isLogin);
+        }
+    }
+
     static CustomForm.Builder buildLoginForm(Player player, String tip) {
         return CustomForm.builder()
                 .title(loginText("title"))
                 .label(tip)
                 .input(loginText("password_label"), bedrockPlaceholder("login.password"))
-                .validResultHandler(response -> PacketListeners.onPlayerSubmitLogin(player, response.asInput()))
-                .closedResultHandler(response -> {
-                    if (allowClose()) {
-                        player.sendMessage(loginText("reopen"));
-                    } else {
-                        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> {
-                            player.kickPlayer(loginText("exit_message"));
-                        });
-                    }
-                })
-                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, "log", response.errorMessage()));
+                .validResultHandler(response ->
+                        PacketListeners.onPlayerSubmitLogin(player, response.asInput()))
+                .closedResultHandler(response -> handleClose(player, true))
+                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, true, response.errorMessage()));
     }
 
     static CustomForm.Builder buildRegisterForm(Player player, String tip) {
@@ -101,16 +121,32 @@ public class GeyserUtil {
                 .label(tip)
                 .input(registerText("password_label"), bedrockPlaceholder("register.password"))
                 .input(registerText("confirm_label"), bedrockPlaceholder("register.confirm"))
-                .validResultHandler(response -> PacketListeners.onPlayerSubmitRegister(player, response.next(), response.next()))
-                .closedResultHandler(response -> {
-                    if (allowClose()) {
-                        player.sendMessage(registerText("reopen"));
-                    } else {
-                        Bukkit.getScheduler().runTask(FlexLoginUI.instance, () -> {
-                            player.kickPlayer(registerText("exit_message"));
-                        });
-                    }
-                })
-                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, "reg", response.errorMessage()));
+                .validResultHandler(response ->
+                        PacketListeners.onPlayerSubmitRegister(player, response.next(), response.next()))
+                .closedResultHandler(response -> handleClose(player, false))
+                .invalidResultHandler(response -> PacketListeners.openMessageUI(player, false, response.errorMessage()));
+    }
+
+    public static CustomForm.Builder buildLogCaptchaForm(Player player, String tip) {
+        return CustomForm.builder()
+                .title(logCaptchaText("title"))
+                .label(tip)
+                .input(logCaptchaText("label"), "")
+                .validResultHandler(response -> PacketListeners.onPlayerVerifyLogCaptcha(player, response.asInput()))
+                .closedResultHandler(response -> handleClose(player, true))
+                .invalidResultHandler(response ->
+                        PacketListeners.handlePlayerCaptcha(player, response.errorMessage()));
+    }
+
+    public static CustomForm.Builder buildRegCaptchaForm(Player player, String tip) {
+        return CustomForm.builder()
+                .title(regCaptchaText("title"))
+                .label(tip)
+                .input(regCaptchaText("label"), "")
+                .validResultHandler(response ->
+                        PacketListeners.onPlayerVerifyRegCaptcha(player, response.asInput()))
+                .closedResultHandler(response -> handleClose(player, false))
+                .invalidResultHandler(response ->
+                        PacketListeners.handlePlayerCaptcha(player, response.errorMessage()));
     }
 }

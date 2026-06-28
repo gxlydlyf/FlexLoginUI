@@ -8,12 +8,14 @@ import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import org.bukkit.plugin.Plugin;
 
 import java.io.*;
-import java.util.*;
-import java.util.function.Consumer;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 基于 BoostedYAML 的配置文件工具类
- * 执行顺序：加载 → 自定义版本迁移 → 自动结构更新 → 保存
+ * 执行顺序：加载 → 版本检测（备份旧版）→ 自动结构更新 → 保存
  */
 public abstract class ConfigAbstract {
 
@@ -25,26 +27,22 @@ public abstract class ConfigAbstract {
     protected String configFileName;
     protected String resourceFilePath;
 
-    // 自定义迁移步骤
-    protected final Map<Integer, VersionStep> versionSteps = new LinkedHashMap<>();
-
     // ==================== 构造方法 ====================
 
     /**
      * @param plugin               插件
-     * @param externalConfigPath   【输出到数据文件夹的路径】你想要的文件名/路径
-     * @param internalResourcePath 【jar 内的资源路径】源文件路径
+     * @param externalConfigPath   输出到数据文件夹的路径
+     * @param internalResourcePath jar内的资源路径
      * @param configVersionKey     版本键
      */
     public ConfigAbstract(Plugin plugin, String externalConfigPath, String internalResourcePath, String configVersionKey) {
         if (plugin == null) plugin = FlexLoginUI.instance;
         this.plugin = plugin;
-        this.configFileName = externalConfigPath;  // 外部目标路径
-        this.configFile = new File(plugin.getDataFolder(), externalConfigPath); // 最终文件
-        this.resourceFilePath = internalResourcePath; // jar 内源资源路径
+        this.configFileName = externalConfigPath;
+        this.configFile = new File(plugin.getDataFolder(), externalConfigPath);
+        this.resourceFilePath = internalResourcePath;
         this.configVersionKey = configVersionKey;
         this.latestVersion = getLatestVersion();
-        registerMigrations();
         loadConfig();
     }
 
@@ -56,45 +54,22 @@ public abstract class ConfigAbstract {
         this(null, externalPath, internalPath, "file-version");
     }
 
-
     // ==================== 子类实现 ====================
-    protected String getResourceName() {
-        return this.resourceFilePath;
-    }
-
     protected abstract int getLatestVersion();
 
-    protected abstract void registerMigrations();
-
-    // ==================== 注册迁移步骤（兼容你原有写法） ====================
-    protected void addVersionStep(int fromVersion, Consumer<YamlDocument> upgradeAction, Consumer<YamlDocument> downgradeAction) {
-        versionSteps.put(fromVersion, new VersionStep(fromVersion, fromVersion + 1, upgradeAction, downgradeAction));
-    }
-
-    protected void addUpgradeStep(int fromVersion, Consumer<YamlDocument> upgradeAction) {
-        addVersionStep(fromVersion, upgradeAction, null);
-    }
-
-    // ==================== 核心加载逻辑（顺序正确） ====================
+    // ==================== 核心加载逻辑 ====================
     public void loadConfig() {
         try {
             configFile.getParentFile().mkdirs();
 
-            // 1. 文件不存在 → 手动释放（支持自定义输出路径！）
+            // 1. 文件不存在 → 从资源释放默认配置
             if (!configFile.exists()) {
-                configFile.getParentFile().mkdirs();
-                try (InputStream in = plugin.getResource(this.resourceFilePath);
-                     OutputStream out = new FileOutputStream(configFile)) {
-                    if (in == null) throw new FileNotFoundException("缺失内置资源: " + this.resourceFilePath);
-                    in.transferTo(out); // JDK 8+ 简洁写法
-                } catch (Exception e) {
-                    plugin.getLogger().severe("释放默认配置失败: " + e.getMessage());
-                }
+                releaseDefaultConfig();
             }
 
-            // ==================== 关键：先加载配置（不自动更新） ====================
+            // 2. 加载配置（不自动更新）
             LoaderSettings loaderSettings = LoaderSettings.builder()
-                    .setAutoUpdate(false) // 关闭自动更新！
+                    .setAutoUpdate(false)
                     .build();
 
             config = YamlDocument.create(
@@ -105,28 +80,83 @@ public abstract class ConfigAbstract {
                     UpdaterSettings.DEFAULT
             );
 
-            // ==================== 2. 先执行你的自定义版本迁移 ====================
+            // 3. 检测版本差异，如果版本不同则备份旧配置
             int currentVersion = config.getInt(configVersionKey, 1);
-            if (currentVersion < latestVersion) {
-                upgradeConfig(currentVersion, latestVersion);
-            } else if (currentVersion > latestVersion) {
-                downgradeConfig(currentVersion, latestVersion);
+            if (currentVersion != latestVersion) {
+                backupOldConfig(currentVersion);
             }
 
-            // ==================== 3. 最后执行 BoostedYAML 自动结构同步 ====================
+            // 4. 执行 BoostedYAML 自动结构同步
             UpdaterSettings updaterSettings = UpdaterSettings.builder()
                     .setVersioning(new BasicVersioning(configVersionKey))
                     .build();
 
             config.update(updaterSettings);
 
-            // 保存最终结果
+            // 5. 保存最终结果
             saveConfig();
 
+            // 6. 输出版本更新日志
+            if (currentVersion != latestVersion) {
+                plugin.getLogger().info("Config file " + configFile.getName() + " has been updated from v" + currentVersion + " to v" + latestVersion);
+            }
+
         } catch (IOException e) {
-            plugin.getLogger().severe("加载配置文件失败 " + configFile.getName() + ": " + e.getMessage());
+            plugin.getLogger().severe("Failed to load config file " + configFile.getName() + ": " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 释放默认配置文件
+     */
+    protected void releaseDefaultConfig() {
+        try (InputStream in = plugin.getResource(this.resourceFilePath);
+             OutputStream out = new FileOutputStream(configFile)) {
+            if (in == null) {
+                throw new FileNotFoundException("缺失内置资源: " + this.resourceFilePath);
+            }
+            in.transferTo(out);
+            plugin.getLogger().info("Default config file has been released: " + configFile.getName());
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to release default config: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 备份旧版本配置文件
+     *
+     * @param oldVersion 旧版本号
+     */
+    protected void backupOldConfig(int oldVersion) {
+        try {
+            // 生成时间戳：yyyyMMdd_HHmmss
+            String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+                    .format(java.time.LocalDateTime.now());
+
+            // 备份文件名：配置文件名.v旧版本号.时间戳.bak
+            String backupFileName = String.format("%s.v%d.%s.bak",
+                    configFile.getName(),
+                    oldVersion,
+                    timestamp);
+
+            File backupFile = new File(configFile.getParentFile(), backupFileName);
+
+            // 复制当前配置文件到备份文件
+            try (InputStream in = new FileInputStream(configFile);
+                 OutputStream out = new FileOutputStream(backupFile)) {
+                in.transferTo(out);
+            }
+
+            plugin.getLogger().info("Old config file has been backed up: " + backupFileName);
+
+        } catch (IOException e) {
+            plugin.getLogger().warning("Failed to back up old config file: " + e.getMessage());
+        }
+    }
+
+    protected String getResourceName() {
+        return this.resourceFilePath;
     }
 
     // ==================== 保存 / 重载 ====================
@@ -134,7 +164,7 @@ public abstract class ConfigAbstract {
         try {
             config.save();
         } catch (IOException e) {
-            plugin.getLogger().severe("保存配置失败 " + configFile.getName() + ": " + e.getMessage());
+            plugin.getLogger().severe("Failed to save config file " + configFile.getName() + ": " + e.getMessage());
         }
     }
 
@@ -146,35 +176,11 @@ public abstract class ConfigAbstract {
         return config;
     }
 
-    // ==================== 自定义迁移逻辑 ====================
-    protected void upgradeConfig(int currentVer, int targetVer) {
-        plugin.getLogger().info("升级配置 " + configFile.getName() + " 从 v" + currentVer + " → v" + targetVer);
-        for (int ver = currentVer; ver < targetVer; ver++) {
-            VersionStep step = versionSteps.get(ver);
-            if (step == null || step.upgradeAction == null) {
-                throw new IllegalStateException("缺少版本 " + ver + " → " + (ver + 1) + " 升级逻辑！");
-            }
-            step.upgradeAction.accept(config);
-            config.set(configVersionKey, ver + 1);
-        }
-        config.set(configVersionKey, targetVer);
-    }
-
-    protected void downgradeConfig(int currentVer, int targetVer) {
-        plugin.getLogger().warning("降级配置 " + configFile.getName() + " 从 v" + currentVer + " → v" + targetVer);
-        for (int ver = currentVer; ver > targetVer; ver--) {
-            VersionStep step = versionSteps.get(ver - 1);
-            if (step == null || step.downgradeAction == null) {
-                throw new UnsupportedOperationException("不支持版本 " + ver + " → " + (ver - 1) + " 降级！");
-            }
-            step.downgradeAction.accept(config);
-            config.set(configVersionKey, ver - 1);
-        }
-        config.set(configVersionKey, targetVer);
-    }
-
     // ==================== 便捷方法 ====================
     public String getString(String key) {
+        if (config.isList(key)) {
+            return String.join("\n", config.getStringList(key, new ArrayList<>()));
+        }
         return config.getString(key);
     }
 
@@ -188,22 +194,5 @@ public abstract class ConfigAbstract {
 
     public List<String> getStringList(String key) {
         return config.getStringList(key);
-    }
-
-    // ==================== 内部类 ====================
-    protected static class VersionStep {
-        final int fromVersion;
-        final int toVersion;
-        final Consumer<YamlDocument> upgradeAction;
-        final Consumer<YamlDocument> downgradeAction;
-
-        public VersionStep(int fromVersion, int toVersion,
-                           Consumer<YamlDocument> upgradeAction,
-                           Consumer<YamlDocument> downgradeAction) {
-            this.fromVersion = fromVersion;
-            this.toVersion = toVersion;
-            this.upgradeAction = upgradeAction;
-            this.downgradeAction = downgradeAction;
-        }
     }
 }

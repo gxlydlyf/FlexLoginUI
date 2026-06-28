@@ -2,8 +2,12 @@
 
 # FlexLoginUI
 
-Graphical authentication plugin for AuthMeReloaded. Supports Anvil login, 1.21.6+ Dialog UI login and Geyser Bedrock
-form login.
+Graphical authentication plugin for AuthMeReloaded. Supports Anvil authentication, clients 1.21.6+ Dialog UI authentication and Geyser
+Bedrock form authentication.
+
+Who needs this plugin: Minecraft server administrators utilizing AuthMeReloaded for authentication, desiring
+cross-version authentication UIs, and looking to provide anvil/dialog authentication screens for Java Edition players as well as authentication
+forms for Geyser Bedrock Edition players.
 
 > [!WARNING]
 > I may not have sufficient time for further plugin testing and development. Feel free to submit bug reports or feature

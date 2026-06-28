@@ -2,12 +2,10 @@ package com.gxlydlyf.flexloginui;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.chat.clickevent.CustomClickEvent;
 import com.github.retrooper.packetevents.protocol.dialog.CommonDialogData;
 import com.github.retrooper.packetevents.protocol.dialog.DialogAction;
 import com.github.retrooper.packetevents.protocol.dialog.MultiActionDialog;
-import com.github.retrooper.packetevents.protocol.dialog.NoticeDialog;
 import com.github.retrooper.packetevents.protocol.dialog.action.DynamicCustomAction;
 import com.github.retrooper.packetevents.protocol.dialog.action.StaticAction;
 import com.github.retrooper.packetevents.protocol.dialog.body.PlainMessage;
@@ -28,7 +26,6 @@ import io.netty.buffer.Unpooled;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,6 +37,9 @@ public class DialogUtil {
     public static final String DIALOG_NAMESPACE = "flex_login_ui";
     public static final String LOGIN_DIALOG_ID = DIALOG_NAMESPACE + ":login";
     public static final String REGISTER_DIALOG_ID = DIALOG_NAMESPACE + ":register";
+    public static final String CAPTCHA_DIALOG_ID = DIALOG_NAMESPACE + ":captcha";
+    public static final String REGISTER_CAPTCHA_DIALOG_ID = CAPTCHA_DIALOG_ID + "/register";
+    public static final String LOGIN_CAPTCHA_DIALOG_ID = CAPTCHA_DIALOG_ID + "/login";
 
     // ---------- 基础对话框构造器 ----------
     private static DialogEncoder.DialogDefinition createBaseDialog(String titleText, String headText) {
@@ -97,21 +97,10 @@ public class DialogUtil {
     public static DialogEncoder.DialogDefinition createLoginDialog(String titleText, String headText,
                                                                    String passwordKey, String passwordLabel,
                                                                    String loginButtonText, String closeButtonText) {
-        DialogEncoder.DialogDefinition def = createBaseDialog(titleText, headText);
-
-        // 密码输入框
-        addInputControl(def, passwordKey, passwordLabel, 32);
-
-        // 按钮
-        addButtonWithAction(def, loginButtonText, LOGIN_DIALOG_ID);
-        addExitButton(def, closeButtonText, LOGIN_DIALOG_ID);
-        if (isHorizontalButtons()) {
-            def.columns = 2;
-        } else {
-            def.columns = 1;
-        }
-
-        return def;
+        return createSingleInputDialog(LOGIN_DIALOG_ID,
+                titleText, headText,
+                passwordKey, passwordLabel,
+                loginButtonText, closeButtonText);
     }
 
     // ---------- 重构后的注册对话框 ----------
@@ -139,6 +128,43 @@ public class DialogUtil {
         return def;
     }
 
+    public static DialogEncoder.DialogDefinition createSingleInputDialog(String actionId, String titleText, String headText,
+                                                                         String inputKey, String inputLabel,
+                                                                         String submitButtonText, String closeButtonText) {
+        DialogEncoder.DialogDefinition def = createBaseDialog(titleText, headText);
+
+        addInputControl(def, inputKey, inputLabel, 32);
+
+        addButtonWithAction(def, submitButtonText, actionId);
+        addExitButton(def, closeButtonText, actionId);
+        if (isHorizontalButtons()) {
+            def.columns = 2;
+        } else {
+            def.columns = 1;
+        }
+
+        return def;
+    }
+
+    public static DialogEncoder.DialogDefinition createLogCaptchaDialog(String tip) {
+        return createSingleInputDialog(
+                LOGIN_CAPTCHA_DIALOG_ID,
+                logCaptchaText("title"), tip,
+                "captcha", logCaptchaText("label"),
+                logCaptchaText("verify"), getLoginCloseButtonText()
+        );
+    }
+
+
+    public static DialogEncoder.DialogDefinition createRegCaptchaDialog(String tip) {
+        return createSingleInputDialog(
+                REGISTER_CAPTCHA_DIALOG_ID,
+                regCaptchaText("title"), tip,
+                "captcha", regCaptchaText("label"),
+                regCaptchaText("verify"), getRegisterCloseButtonText()
+        );
+    }
+
     public static boolean isHighServerVersion() {
         return PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_6);
     }
@@ -150,6 +176,15 @@ public class DialogUtil {
     public static String registerText(String key) {
         return config.getRegisterText(key);
     }
+
+    public static String regCaptchaText(String key) {
+        return config.getRegCaptchaText(key);
+    }
+
+    public static String logCaptchaText(String key) {
+        return config.getLogCaptchaText(key);
+    }
+
 
     public static boolean isHorizontalButtons() {
         return config.getBoolean("pages.dialog.horizontal_buttons");
@@ -206,6 +241,22 @@ public class DialogUtil {
 
     public static void sendRegisterDialog(Player player) {
         sendRegisterDialog(player, registerText("tip"));
+    }
+
+    public static void sendLogCaptchaDialog(Player player, String tip) {
+        if (isHighServerVersion()) {
+            sendNativeLogCaptchaDialog(player, tip);
+        } else {
+            sendDialog(player, createLogCaptchaDialog(tip));
+        }
+    }
+
+    public static void sendRegCaptchaDialog(Player player, String tip) {
+        if (isHighServerVersion()) {
+            sendNativeRegCaptchaDialog(player, tip);
+        } else {
+            sendDialog(player, createRegCaptchaDialog(tip));
+        }
     }
 
     @Deprecated
@@ -342,6 +393,35 @@ public class DialogUtil {
                 "register",           // 行为ID
                 registerText("register_button"),
                 getRegisterCloseButtonText()
+        );
+    }
+
+
+    public static void sendNativeRegCaptchaDialog(Player player, String tip) {
+        sendCommonDialog(
+                player,
+                regCaptchaText("title"),
+                tip,
+                List.of(
+                        createInput("captcha", regCaptchaText("label"))
+                ),
+                "captcha/register",
+                regCaptchaText("verify"),
+                getRegisterCloseButtonText()
+        );
+    }
+
+    public static void sendNativeLogCaptchaDialog(Player player, String tip) {
+        sendCommonDialog(
+                player,
+                logCaptchaText("title"),
+                tip,
+                List.of(
+                        createInput("captcha", logCaptchaText("label"))
+                ),
+                "captcha/login",
+                logCaptchaText("verify"),
+                getLoginCloseButtonText()
         );
     }
 }

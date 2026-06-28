@@ -1,5 +1,5 @@
 # == 不要修改 config-version ==
-config-version: 1
+config-version: 2
 # == config-version 不要修改 ==
 
 debug: false
@@ -39,6 +39,24 @@ text:
     register:
       password: "请设置密码"
       confirm: "请再次输入密码"
+  captcha:
+    # 使用 %captcha_code% 作为验证码代码的占位符
+    register:
+      tip:
+        - "§7请输入验证码以继续注册: "
+        - "§c%captcha_code%"
+      title: 验证
+      label: 验证码
+      verify: 验证
+      invalid: §c验证码无效
+    login:
+      tip:
+        - "§7请输入验证码以继续登录: "
+        - "§c%captcha_code%"
+      title: 验证
+      label: 验证码
+      verify: 验证
+      invalid: §c验证码无效
 pages:
   dialog:
     horizontal_buttons: true

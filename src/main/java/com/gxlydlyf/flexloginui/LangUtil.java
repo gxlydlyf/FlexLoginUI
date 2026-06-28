@@ -9,9 +9,4 @@ public class LangUtil extends ConfigAbstract {
     protected int getLatestVersion() {
         return 1;
     }
-
-    @Override
-    protected void registerMigrations() {
-
-    }
 }
