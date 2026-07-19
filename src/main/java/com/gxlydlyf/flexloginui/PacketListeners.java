@@ -22,7 +22,6 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCustomClickAction;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientNameItem;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerShowDialog;
 import fr.xephi.authme.data.limbo.LimboMessageType;
 import fr.xephi.authme.message.MessageKey;
@@ -58,6 +57,9 @@ public class PacketListeners implements PacketListener, Listener {
     }
 
     public static void disallowCloseKick(Player player, boolean isLogin) {
+        if (authMeApi.isAuthenticated(player) || authMeApi.isUnrestricted(player)) {
+            return;
+        }
         kickPlayer(player, isLogin ? DialogUtil.loginText("exit_message") : DialogUtil.registerText("exit_message"));
     }
 
@@ -84,6 +86,9 @@ public class PacketListeners implements PacketListener, Listener {
                     }
                     break;
                 case CLICK_WINDOW: {
+                    if (!AnvilUtil.isActiveAnvilPage(uuid)) {
+                        return;
+                    }
                     WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(e);
                     int windowId = packet.getWindowId();
                     // 只处理我们的铁砧窗口
@@ -135,6 +140,9 @@ public class PacketListeners implements PacketListener, Listener {
                     break;
                 }
                 case CLOSE_WINDOW: {
+                    if (!AnvilUtil.isActiveAnvilPage(uuid)) {
+                        return;
+                    }
                     int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
                     if (isCustomAnvil(windowId)) {
                         if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
@@ -279,14 +287,6 @@ public class PacketListeners implements PacketListener, Listener {
 
         if (packetType instanceof PacketType.Play.Server serverType) {
             switch (serverType) {
-                case OPEN_WINDOW: {
-                    WrapperPlayServerOpenWindow wrapper = new WrapperPlayServerOpenWindow(e);
-                    int windowId = wrapper.getContainerId();
-                    if (isCustomAnvil(windowId)) {
-                        AnvilUtil.createAnvilPage(player.getUniqueId());
-                    }
-                    break;
-                }
                 case SHOW_DIALOG: {
                     if (isShouldCancelAuthMeDialog(player, new WrapperPlayServerShowDialog(e))) {
                         e.setCancelled(true);
