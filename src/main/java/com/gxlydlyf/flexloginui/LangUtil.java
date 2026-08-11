@@ -7,6 +7,6 @@ public class LangUtil extends ConfigAbstract {
 
     @Override
     protected int getLatestVersion() {
-        return 1;
+        return 2;
     }
 }

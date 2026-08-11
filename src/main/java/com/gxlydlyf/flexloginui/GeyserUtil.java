@@ -53,12 +53,12 @@ public class GeyserUtil {
         return getConnection(player.getUniqueId()).hasFormOpen();
     }
 
-    public static void sendForm(Player player, CustomForm.Builder formBuilder) {
+    public static void sendForm(Player player, CustomForm.Builder formBuilder, boolean needUnauthed) {
         FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
         Bukkit.getServer().getScheduler().runTaskLater(
                 FlexLoginUI.instance,
                 () -> {
-                    if (!AuthMeApi.getInstance().isAuthenticated(player)) {
+                    if (!AuthMeApi.getInstance().isAuthenticated(player) || !needUnauthed) {
                         floodgatePlayer.sendForm(formBuilder.build());
                         if (FlexLoginUI.config.isDebug()) {
                             FlexLoginUI.logger.info("Send Geyser form");
@@ -67,6 +67,10 @@ public class GeyserUtil {
                 },
                 2L
         );
+    }
+
+    public static void sendForm(Player player, CustomForm.Builder formBuilder) {
+        sendForm(player, formBuilder, true);
     }
 
     public static void sendLoginForm(Player player, String tip) {
@@ -148,5 +152,19 @@ public class GeyserUtil {
                 .closedResultHandler(response -> handleClose(player, false))
                 .invalidResultHandler(response ->
                         PacketListeners.handlePlayerCaptcha(player, response.errorMessage()));
+    }
+
+    public static CustomForm.Builder buildChangePasswordForm(Player player, String tip) {
+        return CustomForm.builder()
+                .title(changePasswordText("title"))
+                .label(tip)
+                .input(changePasswordText("old_password_label"), bedrockPlaceholder("login.password"))
+                .input(changePasswordText("new_password_label"), bedrockPlaceholder("register.password"))
+                .input(changePasswordText("confirm_label"), bedrockPlaceholder("register.confirm"))
+                .validResultHandler(response ->
+                        PacketListeners.onPlayerSubmitChangePassword(player, response.next(), response.next(), response.next(), false))
+                .closedResultHandler(response -> PacketListeners.handleChangePasswordClose(player))
+                .invalidResultHandler(response ->
+                        player.sendMessage(response.errorMessage()));
     }
 }

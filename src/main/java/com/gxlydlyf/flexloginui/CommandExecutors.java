@@ -58,6 +58,14 @@ public class CommandExecutors implements CommandExecutor, TabCompleter {
                 // 注册UI逻辑
                 PacketListeners.handlePlayerUI(player);
             }
+            case "changepasswordui" -> {
+                if (!authMeApi.isRegistered(player.getName())) {
+                    player.sendMessage(getLangText("not_registered"));
+                    return true;
+                }
+                // 更改密码UI逻辑
+                PacketListeners.openChangePasswordUI(player);
+            }
             case "flexloginui" -> {
                 if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
                     player.sendMessage(getLangText("not_logged_in"));

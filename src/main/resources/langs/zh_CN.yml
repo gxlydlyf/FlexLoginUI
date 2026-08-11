@@ -1,5 +1,5 @@
 # == 不要修改 file-version ==
-file-version: 1
+file-version: 2
 # == file-version 不要修改 ==
 
 # 格式化颜色等请用 “§” 而不是 “&”
@@ -11,6 +11,7 @@ already_logged_in: "§c你已登录"
 no_need_to_register: "§c你无需注册"
 already_registered: "§c你已注册"
 not_logged_in: "§c你还未登录"
+not_registered: "§c你还没有注册"
 plugin_help:
   title: "§f插件帮助"
   reload: "§f重载插件配置"

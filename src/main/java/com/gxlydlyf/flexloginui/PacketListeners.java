@@ -40,6 +40,7 @@ import com.gxlydlyf.flexloginui.AnvilUtil.AnvilPage;
 import java.util.*;
 
 import static com.gxlydlyf.flexloginui.CommandExecutors.authMeApi;
+import static com.gxlydlyf.flexloginui.DialogUtil.changePasswordText;
 
 public class PacketListeners implements PacketListener, Listener {
     public void refreshCustomAnvil(Player player) {
@@ -102,9 +103,14 @@ public class PacketListeners implements PacketListener, Listener {
                     boolean isRegister = anvilPage.isType(AnvilPageType.REGISTER);
                     boolean isLogCaptcha = anvilPage.isType(AnvilPageType.LOGIN_CAPTCHA);
                     boolean isRegCaptcha = anvilPage.isType(AnvilPageType.REGISTER_CAPTCHA);
+                    boolean isChangePwd = anvilPage.isChangePassword();
                     int slot = packet.getSlot();
                     if (slot == 0) {
-                        if (FlexLoginUI.config.getBoolean("pages.anvil.allow_close")) {
+                        if (isChangePwd) {
+                            anvilPage.manuallyClose();
+                            user.closeInventory();
+                            handleChangePasswordClose(player);
+                        } else if (FlexLoginUI.config.getBoolean("pages.anvil.allow_close")) {
                             anvilPage.manuallyClose();
                             user.closeInventory();
                             sendPlayerReopen(player, isLogin);
@@ -131,6 +137,23 @@ public class PacketListeners implements PacketListener, Listener {
                                     anvilPage.confirmPassword = inputText;
                                     AnvilUtil.openRegisterAnvil(player, DialogUtil.registerText("tip_confirm"), false);
                                 }
+                            } else if (isChangePwd) {
+                                if (anvilPage.isChangePwdConfirm()) {
+                                    onPlayerSubmitChangePassword(player, anvilPage.oldPassword, anvilPage.newPassword, inputText, true);
+                                } else if (anvilPage.isChangePwdNew()) {
+                                    // 步骤2：输入新密码 → 直接进入确认步骤
+                                    anvilPage.newPassword = inputText;
+                                    AnvilUtil.openChangePasswordAnvil(player, changePasswordText("tip_confirm"), false);
+                                } else {
+                                    // 步骤1：输入旧密码 → 立即校验
+                                    if (!authMeApi.checkPassword(player.getName(), inputText)) {
+                                        player.sendMessage(changePasswordText("wrong_password"));
+                                        AnvilUtil.openChangePasswordAnvil(player, changePasswordText("tip_old") + "\n" + changePasswordText("wrong_password"), false);
+                                    } else {
+                                        anvilPage.oldPassword = inputText;
+                                        AnvilUtil.openChangePasswordAnvil(player, changePasswordText("tip_new"), false);
+                                    }
+                                }
                             }
                         } else {
                             anvilPage.restoreAnvilPage(player);
@@ -145,8 +168,8 @@ public class PacketListeners implements PacketListener, Listener {
                     }
                     int windowId = new WrapperPlayClientCloseWindow(e).getWindowId();
                     if (isCustomAnvil(windowId)) {
-                        if (!authMeApi.isUnrestricted(player) && !authMeApi.isAuthenticated(player)) {
-                            AnvilPage anvilPage = AnvilUtil.getAnvilPage(uuid);
+                        AnvilPage anvilPage = AnvilUtil.getAnvilPage(uuid);
+                        if (!authMeApi.isUnrestricted(player) && (!authMeApi.isAuthenticated(player) || anvilPage.isChangePassword())) {
                             if (!anvilPage.isManuallyClose()) {
                                 if (!player.isDead()) {
                                     anvilPage.restoreAnvilPage(player);
@@ -166,6 +189,7 @@ public class PacketListeners implements PacketListener, Listener {
                     boolean isRegister = id.equals(DialogUtil.REGISTER_DIALOG_ID);
                     boolean isLogCaptcha = id.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID);
                     boolean isRegCaptcha = id.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID);
+                    boolean isChangePassword = id.equals(DialogUtil.CHANGE_PASSWORD_DIALOG_ID);
                     NBT nbt = packet.getPayload();
                     if (nbt instanceof NBTCompound payload) {
                         boolean close = payload.getBooleanOr("close", false);
@@ -184,6 +208,14 @@ public class PacketListeners implements PacketListener, Listener {
                                     close,
                                     payload.getStringTagValueOrDefault("captcha", "")
                             );
+                        } else if (isChangePassword) {
+                            handleChangePasswordClickAction(
+                                    player,
+                                    close,
+                                    payload.getStringTagValueOrDefault("old_password", ""),
+                                    payload.getStringTagValueOrDefault("new_password", ""),
+                                    payload.getStringTagValueOrDefault("confirm", "")
+                            );
                         }
                     }
                     break;
@@ -196,6 +228,42 @@ public class PacketListeners implements PacketListener, Listener {
 
     public static void sendPlayerReopen(Player player, boolean isLogin) {
         player.sendMessage(isLogin ? DialogUtil.loginText("reopen") : DialogUtil.registerText("reopen"));
+    }
+
+    public static void openChangePasswordUI(Player player, String msg) {
+        if (GeyserUtil.isBedrock(player)) {
+            if (GeyserUtil.hasOpenForm(player)) {
+                return;
+            }
+            GeyserUtil.sendForm(player, GeyserUtil.buildChangePasswordForm(player, msg), false);
+            return;
+        }
+
+        if (ViaVersionUtil.isLowVersion(player)) {
+            AnvilUtil.openChangePasswordAnvil(player, msg, false);
+        } else {
+            DialogUtil.sendChangePasswordDialog(player, msg);
+        }
+    }
+
+    public static void openChangePasswordUI(Player player) {
+        openChangePasswordUI(player, changePasswordText("tip_old"));
+    }
+
+    public static void handleChangePasswordClose(Player player) {
+        if (authMeApi.isAuthenticated(player)) {
+            player.sendMessage(changePasswordText("reopen"));
+        } else {
+            handlePlayerUI(player);
+        }
+    }
+
+    public static void handleChangePasswordClickAction(Player player, boolean close, String oldPassword, String newPassword, String confirm) {
+        if (close) {
+            handleChangePasswordClose(player);
+        } else {
+            onPlayerSubmitChangePassword(player, oldPassword, newPassword, confirm, false);
+        }
     }
 
     public static void handleCustomClickAction(Player player, boolean isLogin, boolean close, String password, String confirm) {
@@ -577,6 +645,49 @@ public class PacketListeners implements PacketListener, Listener {
         }
     }
 
+
+    public static void onPlayerSubmitChangePassword(Player player, String oldPassword, String newPassword, String confirm, boolean fromAnvil) {
+        String name = player.getName();
+        if (authMeApi.isRegistered(name)) {
+            String msg = null;
+            if (!authMeApi.checkPassword(name, oldPassword)) {
+                msg = changePasswordText("wrong_password");
+            } else if (!newPassword.equals(confirm)) {
+                msg = changePasswordText("password_not_match");
+            } else {
+                ValidationService validationService = AuthMeUtil.validationService;
+                fr.xephi.authme.message.Messages messages = AuthMeUtil.messages;
+                ValidationService.ValidationResult validationResult = validationService.validatePassword(newPassword, name);
+                if (newPassword.isEmpty()) {
+                    msg = messages.retrieveSingle(player, MessageKey.PASSWORD_UNSAFE_ERROR);
+                } else if (validationResult.hasError()) {
+                    MessageKey errorKey = validationResult.getMessageKey();
+                    msg = messages.retrieveSingle(player, errorKey, validationResult.getArgs());
+                }
+            }
+
+            if (msg != null) {
+                player.sendMessage(msg);
+                // 清除铁砧页面状态，重新从步骤1开始，附带步骤说明
+                if (AnvilUtil.isActiveAnvilPage(player)) {
+                    AnvilPage anvilPage = AnvilUtil.getAnvilPage(player);
+                    anvilPage.oldPassword = null;
+                    anvilPage.newPassword = null;
+                }
+                openChangePasswordUI(player, fromAnvil ? changePasswordText("tip_old") + "\n" + msg : msg);
+            } else {
+                authMeApi.changePassword(name, newPassword);
+                player.sendMessage(changePasswordText("change_successful"));
+                if (ViaVersionUtil.isLowVersion(player)) {
+                    User user = getUser(player);
+                    if (user != null) {
+                        user.closeInventory();
+                    }
+                    AnvilUtil.closeAnvilPage(player);
+                }
+            }
+        }
+    }
 
     public static void onPlayerVerifyRegCaptcha(Player player, String code) {
         String name = player.getName();

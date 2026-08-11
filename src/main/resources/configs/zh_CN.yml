@@ -1,5 +1,5 @@
 # == 不要修改 config-version ==
-config-version: 2
+config-version: 3
 # == config-version 不要修改 ==
 
 debug: false
@@ -33,6 +33,21 @@ text:
     registration_successful: "注册成功！"
     password_not_match: "§c两次密码不匹配"
     reopen: "输入 /regui 重新打开注册页面"
+  change_password:
+    title: "更改密码"
+    tip_old: "§7请输入旧密码"
+    tip_new: "§7请输入新密码"
+    tip_confirm: "§7请再次输入新密码"
+    old_password_label: "旧密码"
+    new_password_label: "新密码"
+    confirm_label: "确认新密码"
+    change_button: "更改密码"
+    close_button: "关闭页面"
+    password_not_match: "§c两次密码不匹配"
+    change_failed: "§c更改密码失败！"
+    change_successful: "密码更改成功！"
+    wrong_password: "§c旧密码错误"
+    reopen: "输入 /changepasswordui 重新打开更改密码页面"
   bedrock_placeholder:
     login:
       password: "请输入密码"

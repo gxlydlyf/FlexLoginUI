@@ -180,6 +180,10 @@ public class ConfigUtil extends ConfigAbstract {
         return getString("text.register." + key);
     }
 
+    public String getChangePasswordText(String key) {
+        return getString("text.change_password." + key);
+    }
+
     public String getCaptchaText(String key) {
         return getString("text.captcha." + key);
     }
@@ -195,6 +199,6 @@ public class ConfigUtil extends ConfigAbstract {
 
     @Override
     protected int getLatestVersion() {
-        return 2;
+        return 3;
     }
 }

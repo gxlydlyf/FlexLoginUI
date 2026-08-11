@@ -50,13 +50,16 @@ public class AnvilUtil {
         REGISTER,
         LOGIN,
         REGISTER_CAPTCHA,
-        LOGIN_CAPTCHA
+        LOGIN_CAPTCHA,
+        CHANGE_PASSWORD
     }
 
     public static class AnvilPage {
         private AnvilPageType type;
         public String input = "";
         public String confirmPassword = null;
+        public String oldPassword = null;
+        public String newPassword = null;
         private boolean manuallyClose = false;
         public String tip = "";
 
@@ -70,6 +73,22 @@ public class AnvilUtil {
 
         public void clearConfirm() {
             confirmPassword = null;
+        }
+
+        public boolean isChangePassword() {
+            return isType(AnvilPageType.CHANGE_PASSWORD);
+        }
+
+        public boolean isChangePwdOld() {
+            return this.isChangePassword() && oldPassword == null;
+        }
+
+        public boolean isChangePwdNew() {
+            return this.isChangePassword() && oldPassword != null && newPassword == null;
+        }
+
+        public boolean isChangePwdConfirm() {
+            return this.isChangePassword() && oldPassword != null && newPassword != null;
         }
 
         public boolean isType(AnvilPageType type) {
@@ -97,6 +116,8 @@ public class AnvilUtil {
                 AnvilUtil.openLogCaptchaAnvil(player, tip, refresh);
             } else if (isType(AnvilPageType.REGISTER_CAPTCHA)) {
                 AnvilUtil.openRegCaptchaAnvil(player, tip, refresh);
+            } else if (isType(AnvilPageType.CHANGE_PASSWORD)) {
+                AnvilUtil.openChangePasswordAnvil(player, tip, refresh);
             }
         }
 
@@ -280,6 +301,25 @@ public class AnvilUtil {
 
     public static void openRegCaptchaAnvil(Player player, String msg) {
         openRegCaptchaAnvil(player, msg, false);
+    }
+
+    // ====================== 更改密码 UI ======================
+
+    public static void openChangePasswordAnvil(Player player, String msg, boolean refresh) {
+        openCommonAnvil(player, AnvilPageType.CHANGE_PASSWORD, refresh, changePasswordText("title"),
+                getChangePasswordCloseButtonText(), msg, changePasswordText("change_button"));
+    }
+
+    public static void openChangePasswordAnvil(Player player, String msg) {
+        openChangePasswordAnvil(player, msg, false);
+    }
+
+    public static void openChangePasswordAnvil(Player player, boolean refresh) {
+        openChangePasswordAnvil(player, changePasswordText("tip_old"), refresh);
+    }
+
+    public static void openChangePasswordAnvil(Player player) {
+        openChangePasswordAnvil(player, false);
     }
 
     // ====================== 通用物品构建器（核心） ======================

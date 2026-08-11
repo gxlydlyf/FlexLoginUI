@@ -40,6 +40,7 @@ public class DialogUtil {
     public static final String CAPTCHA_DIALOG_ID = DIALOG_NAMESPACE + ":captcha";
     public static final String REGISTER_CAPTCHA_DIALOG_ID = CAPTCHA_DIALOG_ID + "/register";
     public static final String LOGIN_CAPTCHA_DIALOG_ID = CAPTCHA_DIALOG_ID + "/login";
+    public static final String CHANGE_PASSWORD_DIALOG_ID = DIALOG_NAMESPACE + ":change_password";
 
     // ---------- 基础对话框构造器 ----------
     private static DialogEncoder.DialogDefinition createBaseDialog(String titleText, String headText) {
@@ -177,6 +178,10 @@ public class DialogUtil {
         return config.getRegisterText(key);
     }
 
+    public static String changePasswordText(String key) {
+        return config.getChangePasswordText(key);
+    }
+
     public static String regCaptchaText(String key) {
         return config.getRegCaptchaText(key);
     }
@@ -223,6 +228,10 @@ public class DialogUtil {
 
     public static String getRegisterCloseButtonText() {
         return allowClose() ? registerText("close_button") : registerText("exit_button");
+    }
+
+    public static String getChangePasswordCloseButtonText() {
+        return changePasswordText("close_button");
     }
 
     public static void sendRegisterDialog(Player player, String headText) {
@@ -422,6 +431,47 @@ public class DialogUtil {
                 "captcha/login",
                 logCaptchaText("verify"),
                 getLoginCloseButtonText()
+        );
+    }
+
+    // ====================== 更改密码对话框 ======================
+
+    public static DialogEncoder.DialogDefinition createChangePasswordDialog(Player player, String headText) {
+        DialogEncoder.DialogDefinition def = createBaseDialog(changePasswordText("title"), headText);
+        addInputControl(def, "old_password", changePasswordText("old_password_label"), 32);
+        addInputControl(def, "new_password", changePasswordText("new_password_label"), 32);
+        addInputControl(def, "confirm", changePasswordText("confirm_label"), 32);
+        addButtonWithAction(def, changePasswordText("change_button"), CHANGE_PASSWORD_DIALOG_ID);
+        addExitButton(def, getChangePasswordCloseButtonText(), CHANGE_PASSWORD_DIALOG_ID);
+        if (isHorizontalButtons()) {
+            def.columns = 2;
+        } else {
+            def.columns = 1;
+        }
+        return def;
+    }
+
+    public static void sendChangePasswordDialog(Player player, String headText) {
+        if (isHighServerVersion()) {
+            sendNativeChangePasswordDialog(player, headText);
+        } else {
+            sendDialog(player, createChangePasswordDialog(player, headText));
+        }
+    }
+
+    public static void sendNativeChangePasswordDialog(Player player, String headText) {
+        sendCommonDialog(
+                player,
+                changePasswordText("title"),
+                headText,
+                List.of(
+                        createInput("old_password", changePasswordText("old_password_label")),
+                        createInput("new_password", changePasswordText("new_password_label")),
+                        createInput("confirm", changePasswordText("confirm_label"))
+                ),
+                "change_password",
+                changePasswordText("change_button"),
+                getChangePasswordCloseButtonText()
         );
     }
 }

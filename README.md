@@ -49,11 +49,13 @@ settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.pr
 
 ![](images/zh_CN/dialog/register.png)
 ![](images/zh_CN/dialog/login.png)
+![](images/zh_CN/dialog/change_password.png)
 
 #### 水平按钮
 
 ![](images/zh_CN/dialog/h_btn/register.png)
 ![](images/zh_CN/dialog/h_btn/login.png)
+![](images/zh_CN/dialog/h_btn/change_password.png)
 
 ### 铁砧
 
@@ -72,6 +74,12 @@ settings.registration.dialog.postJoin.enable 或 settings.registration.dialog.pr
 ![](images/zh_CN/anvil/login/1.png)
 ![](images/zh_CN/anvil/login/2.png)
 
+#### 修改密码
+
+![](images/zh_CN/anvil/change_password/1.png)
+![](images/zh_CN/anvil/change_password/2.png)
+![](images/zh_CN/anvil/change_password/3.png)
+
 ### 基岩版表单
 
 通过 Geyser 加入的用户可见
@@ -82,6 +90,7 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 ![](images/zh_CN/bedrock/register.jpg)
 ![](images/zh_CN/bedrock/login.jpg)
+![](images/zh_CN/bedrock/change_password.jpg)
 
 ## 命令用法
 
@@ -105,6 +114,10 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 `/regui` 和 `/logui` 命令需要添加到 AuthMe 配置中 settings.restrictions.allowCommands 才能使用
 
+### `/changepasswordui` `/cpwdui`
+
+用于开启更改密码UI界面
+
 ## 权限
 
 ### flexloginui.commands.*
@@ -115,6 +128,7 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 - `flexloginui.commands.login` 使用 /logui 命令
 - `flexloginui.commands.register` 使用 /regui 命令
+- `flexloginui.commands.change_password` 使用 /changepasswordui 命令
 
 ### flexloginui.commands.manager
 

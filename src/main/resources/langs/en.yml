@@ -1,5 +1,5 @@
 # == DO NOT EDIT file-version ==
-file-version: 1
+file-version: 2
 # == DO NOT EDIT file-version ==
 
 # Use "§" for color formatting instead of "&"
@@ -11,6 +11,7 @@ already_logged_in: "§cYou are already logged in"
 no_need_to_register: "§cYou don't need to register"
 already_registered: "§cYou are already registered"
 not_logged_in: "§cYou haven't logged in yet"
+not_registered: "§cYou are not registered"
 plugin_help:
   title: "§fPlugin Help"
   reload: "§fReload plugin configuration"

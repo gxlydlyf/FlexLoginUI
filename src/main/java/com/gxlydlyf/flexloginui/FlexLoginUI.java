@@ -54,6 +54,7 @@ public final class FlexLoginUI extends JavaPlugin {
         this.getCommand("flexloginui").setExecutor(commandExecutors);
         this.getCommand("logui").setExecutor(commandExecutors);
         this.getCommand("regui").setExecutor(commandExecutors);
+        this.getCommand("changepasswordui").setExecutor(commandExecutors);
 
         ViaVersionUtil.enabled = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
         if (ViaVersionUtil.enabled) {

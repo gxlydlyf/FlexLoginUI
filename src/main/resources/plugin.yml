@@ -19,6 +19,7 @@ permissions:
     children:
       flexloginui.commands.login: true
       flexloginui.commands.register: true
+      flexloginui.commands.change_password: true
   flexloginui.commands.manager:
     description: 管理 FlexLoginUI 插件命令
     default: op
@@ -46,3 +47,9 @@ commands:
     usage: /<command>
     permission: flexloginui.commands.register
     permission-message: You do not have permission!
+  changepasswordui:
+    description: 打开更改密码 UI 界面
+    usage: /<command>
+    permission: flexloginui.commands.change_password
+    permission-message: You do not have permission!
+    aliases: [ cpwdui ]

@@ -2,11 +2,13 @@
 
 # FlexLoginUI
 
-Graphical authentication plugin for AuthMeReloaded. Supports Anvil authentication, clients 1.21.6+ Dialog UI authentication and Geyser
+Graphical authentication plugin for AuthMeReloaded. Supports Anvil authentication, clients 1.21.6+ Dialog UI
+authentication and Geyser
 Bedrock form authentication.
 
 Who needs this plugin: Minecraft server administrators utilizing AuthMeReloaded for authentication, desiring
-cross-version authentication UIs, and looking to provide anvil/dialog authentication screens for Java Edition players as well as authentication
+cross-version authentication UIs, and looking to provide anvil/dialog authentication screens for Java Edition players as
+well as authentication
 forms for Geyser Bedrock Edition players.
 
 > [!WARNING]
@@ -54,11 +56,13 @@ is enabled, the native AuthMe dialog will be displayed instead of this plugin's 
 
 ![](images/en/dialog/register.png)
 ![](images/en/dialog/login.png)
+![](images/en/dialog/change_password.png)
 
 #### Horizontal Buttons
 
 ![](images/en/dialog/h_btn/register.png)
 ![](images/en/dialog/h_btn/login.png)
+![](images/en/dialog/h_btn/change_password.png)
 
 ### Anvil UI
 
@@ -77,6 +81,12 @@ Visible for clients below 1.21.6
 ![](images/en/anvil/login/1.png)
 ![](images/en/anvil/login/2.png)
 
+#### Change password
+
+![](images/en/anvil/change_password/1.png)
+![](images/en/anvil/change_password/2.png)
+![](images/en/anvil/change_password/3.png)
+
 ### Bedrock Form
 
 Available for players joining via Geyser
@@ -88,6 +98,7 @@ to the form, with all form text sourced from AuthMe.
 
 ![](images/en/bedrock/register.jpg)
 ![](images/en/bedrock/login.jpg)
+![](images/en/bedrock/change_password.jpg)
 
 ## Commands
 
@@ -111,6 +122,10 @@ Open registration interface
 To use the `/regui` and `/logui` commands, you need to add them to settings.restrictions.allowCommands in the AuthMe
 configuration.
 
+### `/changepasswordui` `/cpwdui`
+
+Open the password change interface
+
 ## Permissions
 
 ### flexloginui.commands.*
@@ -121,6 +136,7 @@ Sub-permissions:
 
 - `flexloginui.commands.login` Use /logui
 - `flexloginui.commands.register` Use /regui
+- `flexloginui.commands.change_password` Use /changepasswordui
 
 ### flexloginui.commands.manager
 

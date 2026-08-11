@@ -1,5 +1,5 @@
 # == DO NOT EDIT config-version ==
-config-version: 2
+config-version: 3
 # == DO NOT EDIT config-version ==
 
 debug: false
@@ -33,6 +33,21 @@ text:
     registration_successful: "Registration successful!"
     password_not_match: "§cPasswords do not match"
     reopen: "Type /regui to reopen the registration page"
+  change_password:
+    title: "Change Password"
+    tip_old: "§7Please enter your old password"
+    tip_new: "§7Please enter your new password"
+    tip_confirm: "§7Please confirm your new password"
+    old_password_label: "Old Password"
+    new_password_label: "New Password"
+    confirm_label: "Confirm New Password"
+    change_button: "Change Password"
+    close_button: "Close"
+    password_not_match: "§cPasswords do not match"
+    change_failed: "§cPassword change failed!"
+    change_successful: "Password changed successfully!"
+    wrong_password: "§cIncorrect old password"
+    reopen: "Type /changepasswordui to reopen the change password page"
   bedrock_placeholder:
     login:
       password: "Enter your password"
