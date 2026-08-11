@@ -13,7 +13,7 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -46,8 +46,9 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: target/flexloginui-${{ env.VERSION }}.jar
+          token: ${{ secrets.RELEASE_PAT }}
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
 
       - name: Publish to GitHub Packages Apache Maven
         run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
