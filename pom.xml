@@ -17,7 +17,14 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.release>17</maven.compiler.release>
     </properties>
-    <url>https://github.com/gxlydlyf</url>
+    <url>https://github.com/gxlydlyf/FlexLoginUI</url>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/gxlydlyf/FlexLoginUI</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
