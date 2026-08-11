@@ -5,7 +5,7 @@ name: Maven Package
 
 on:
   release:
-    types: [ created ]
+    types: [ published ]
   workflow_dispatch:
 
 jobs:
@@ -35,6 +35,19 @@ jobs:
         with:
           name: FlexLoginUI
           path: target/*.jar
+
+      - name: Get project version
+        run: |
+          VER=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+
+      - name: Attach jar to Release Download Assets
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: target/flexloginui-${{ env.VERSION }}.jar
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Publish to GitHub Packages Apache Maven
         run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
