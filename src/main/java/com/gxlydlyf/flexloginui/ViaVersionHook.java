@@ -47,6 +47,11 @@ public class ViaVersionHook {
                         case String s when s.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID) || s.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID) ->
                             PacketListeners.handleCaptchaCustomClickAction(player, s.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID), close,
                                     compound.getString("captcha"));
+                        case String s when s.equals(DialogUtil.CHANGE_PASSWORD_DIALOG_ID) ->
+                            PacketListeners.handleChangePasswordClickAction(player, close,
+                                    compound.getString("old_password"),
+                                    compound.getString("new_password"),
+                                    compound.getString("confirm"));
                         default -> {}
                     }
                 }
