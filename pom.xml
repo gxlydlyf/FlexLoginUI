@@ -15,7 +15,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.target>21</maven.compiler.target>
         <jvmdg.version>2.0.1</jvmdg.version>
     </properties>
     <url>https://github.com/gxlydlyf/FlexLoginUI</url>
@@ -73,6 +73,23 @@
                                 <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
+                        <!-- 针对 boosted-yaml 排除重复的类和资源 -->
+                        <filter>
+                            <artifact>dev.dejvokep:boosted-yaml</artifact>
+                            <excludes>
+                                <!-- 排除所有 META-INF/maven 下的 pom 文件 -->
+                                <exclude>META-INF/maven/**</exclude>
+                                <!-- 排除多版本字节码 -->
+                                <exclude>META-INF/versions/**</exclude>
+                                <!-- 排除模块信息（Java 9+） -->
+                                <exclude>module-info.class</exclude>
+                                <!-- 如果你的项目没有直接使用 snakeyaml 和 JetBrains 注解，可以排除它们 -->
+                                <exclude>org/snakeyaml/**</exclude>
+                                <exclude>org/yaml/snakeyaml/**</exclude>
+                                <exclude>org/intellij/**</exclude>
+                                <exclude>org/jetbrains/annotations/**</exclude>
+                            </excludes>
+                        </filter>
                         <filter>
                             <artifact>dev.dejvokep:boosted-yaml</artifact>
                             <excludes>
@@ -116,6 +133,17 @@
                             <outputDirectory>${project.build.directory}</outputDirectory>
                         </configuration>
                     </execution>
+                    <!-- 生成 provided 依赖 classpath 文件 -->
+                    <execution>
+                        <id>build-classpath</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.directory}/classpath.txt</outputFile>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -123,6 +151,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>1.0b3</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>ant</groupId>
+                                <artifactId>ant</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <!-- 第一步：字节码降级 -->
                     <execution>
@@ -133,17 +174,24 @@
                         </goals>
                         <configuration>
                             <target>
-                                <java jar="${project.build.directory}/jvmdowngrader-cli-all.jar"
-                                      fork="true"
-                                      failonerror="true"
-                                      dir="${project.build.directory}">
+                                <!-- 读取 classpath 文件到 Ant 属性 cp.list -->
+                                <loadfile property="cp.list"
+                                          srcFile="${project.build.directory}/classpath.txt"/>
+                                <!-- 调用 java 执行 JvmDowngrader -->
+                                <exec executable="java" failonerror="true" dir="${project.build.directory}">
+                                    <arg value="-jar"/>
+                                    <arg value="jvmdowngrader-cli-all.jar"/>
                                     <arg value="-c"/>
                                     <arg value="52"/>
                                     <arg value="downgrade"/>
                                     <arg value="-t"/>
                                     <arg value="${project.artifactId}-${project.version}.jar"/>
                                     <arg value="temp-downgrade.jar"/>
-                                </java>
+                                    <!-- 将整个 classpath 作为 -cp 的一个参数 -->
+                                    <arg value="-cp"/>
+                                    <!--suppress MavenModelInspection -->
+                                    <arg value="${cp.list}"/>
+                                </exec>
                             </target>
                         </configuration>
                     </execution>
@@ -302,6 +350,7 @@
             <version>2.10.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <!--suppress VulnerableLibrariesLocal -->
         <dependency>
             <groupId>org.geysermc.geyser</groupId>
             <artifactId>core</artifactId>
