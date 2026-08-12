@@ -40,6 +40,11 @@ public class AuthMeUtil {
     private static RegistrationCaptchaManager registrationCaptchaManager;
     private static LimboService limboService;
     private static TempbanManager tempbanManager;
+    // SecuritySettings / RestrictionSettings 字段缓存，用反射避免旧版 NoSuchFieldError
+    private static Field enableLoginFailureCaptchaField;
+    private static Field enableCaptchaForRegistrationField;
+    private static Field tempbanOnMaxLoginsField;
+    private static Field kickOnWrongPasswordField;
 
 
     public static void getAuthMe() {
@@ -88,10 +93,35 @@ public class AuthMeUtil {
             try {
                 // 查找并缓存字段 + 方法
                 useDialogUiField = RegistrationSettings.class.getField("USE_DIALOG_UI");
-                getPropertyMethod = CommonService.class.getMethod("getProperty", ch.jalu.configme.properties.Property.class);
+
+                // 兼容新旧版 AuthMe 的 configme 包路径
+                // 新版：ch.jalu.configme.properties.Property
+                // 旧版：fr.xephi.authme.libs.ch.jalu.configme.properties.Property
+                Class<?> propertyClass;
+                try {
+                    propertyClass = Class.forName("fr.xephi.authme.libs.ch.jalu.configme.properties.Property");
+                } catch (ClassNotFoundException ignoredOld) {
+                    propertyClass = Class.forName("ch.jalu.configme.properties.Property");
+                }
+                getPropertyMethod = CommonService.class.getMethod("getProperty", propertyClass);
             } catch (Exception ignored) {
                 // 不存在就保持 null，后面自动返回 false
             }
+
+            // 缓存 SecuritySettings / RestrictionSettings 字段，兼容旧版 AuthMe
+            // 旧版 AuthMe 可能没有这些字段，用反射 + try-catch 避免 NoSuchFieldError
+            try {
+                enableLoginFailureCaptchaField = SecuritySettings.class.getField("ENABLE_LOGIN_FAILURE_CAPTCHA");
+            } catch (Exception ignored) {}
+            try {
+                enableCaptchaForRegistrationField = SecuritySettings.class.getField("ENABLE_CAPTCHA_FOR_REGISTRATION");
+            } catch (Exception ignored) {}
+            try {
+                tempbanOnMaxLoginsField = SecuritySettings.class.getField("TEMPBAN_ON_MAX_LOGINS");
+            } catch (Exception ignored) {}
+            try {
+                kickOnWrongPasswordField = RestrictionSettings.class.getField("KICK_ON_WRONG_PASSWORD");
+            } catch (Exception ignored) {}
 
             // Captcha
             loginCaptchaManager = (LoginCaptchaManager) getSingletonMethod.invoke(injector, LoginCaptchaManager.class);
@@ -115,20 +145,20 @@ public class AuthMeUtil {
     }
 
     public static boolean useLoginFailureCaptcha() {
-        return getBooleanSetting(SecuritySettings.ENABLE_LOGIN_FAILURE_CAPTCHA);
+        return getBooleanSetting(enableLoginFailureCaptchaField);
     }
 
 
     public static boolean useRegisterCaptcha() {
-        return getBooleanSetting(SecuritySettings.ENABLE_CAPTCHA_FOR_REGISTRATION);
+        return getBooleanSetting(enableCaptchaForRegistrationField);
     }
 
     public static boolean useTempban() {
-        return getBooleanSetting(SecuritySettings.TEMPBAN_ON_MAX_LOGINS);
+        return getBooleanSetting(tempbanOnMaxLoginsField);
     }
 
     public static boolean kickOnWrongPassword() {
-        return getBooleanSetting(RestrictionSettings.KICK_ON_WRONG_PASSWORD);
+        return getBooleanSetting(kickOnWrongPasswordField);
     }
 
     public static boolean isLoginCaptchaRequired(String name) {
