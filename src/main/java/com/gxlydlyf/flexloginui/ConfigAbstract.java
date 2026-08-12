@@ -8,7 +8,6 @@ import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import org.bukkit.plugin.Plugin;
 
 import java.io.*;
-import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;

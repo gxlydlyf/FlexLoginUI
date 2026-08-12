@@ -188,14 +188,14 @@ public class PacketListeners implements PacketListener, Listener {
                     if (nbt instanceof NBTCompound payload) {
                         boolean close = payload.getBooleanOr("close", false);
                         switch (id) {
-                            case String s when isLogin || isRegister ->
+                            case String ignored when isLogin || isRegister ->
                                 handleCustomClickAction(player, isLogin, close,
                                         payload.getStringTagValueOrDefault("password", ""),
                                         payload.getStringTagValueOrDefault("confirm", ""));
-                            case String s when isLogCaptcha || isRegCaptcha ->
+                            case String ignored when isLogCaptcha || isRegCaptcha ->
                                 handleCaptchaCustomClickAction(player, isLogCaptcha, close,
                                         payload.getStringTagValueOrDefault("captcha", ""));
-                            case String s when isChangePassword ->
+                            case String ignored when isChangePassword ->
                                 handleChangePasswordClickAction(player, close,
                                         payload.getStringTagValueOrDefault("old_password", ""),
                                         payload.getStringTagValueOrDefault("new_password", ""),

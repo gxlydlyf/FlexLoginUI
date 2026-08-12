@@ -29,9 +29,7 @@ public class ViaVersionHook {
         // 在 1.21.6 最后的转换层注册监听器
         Protocol1_21_5To1_21_6 protocol = Via.getManager().getProtocolManager().getProtocol(Protocol1_21_5To1_21_6.class);
         if (protocol != null) {
-            protocol.appendServerbound(ServerboundPackets1_21_6.PLAYER_LOADED, wrapper -> {
-                PacketListeners.handlePlayerDialog(getPlayer(wrapper.user()));
-            });
+            protocol.appendServerbound(ServerboundPackets1_21_6.PLAYER_LOADED, wrapper -> PacketListeners.handlePlayerDialog(getPlayer(wrapper.user())));
             protocol.appendServerbound(ServerboundPackets1_21_6.CUSTOM_CLICK_ACTION, wrapper -> {
                 // 1. 读取 ID
                 Key identifier = wrapper.passthrough(Types.IDENTIFIER);

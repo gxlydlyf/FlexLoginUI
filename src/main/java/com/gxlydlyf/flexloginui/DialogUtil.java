@@ -262,7 +262,7 @@ public class DialogUtil {
 
     @Deprecated
     private static void sendDialogRaw(Player player, DialogEncoder.DialogDefinition def) {
-        ViaAPI<Player> viaAPI = Via.getAPI();
+        @SuppressWarnings("unchecked") ViaAPI<Player> viaAPI = Via.getAPI();
         if (!Objects.requireNonNull(viaAPI.getConnection(player.getUniqueId())).getProtocolInfo().protocolVersion().newerThanOrEqualTo(ProtocolVersion.v1_21_6)) {
             return;
         }
@@ -347,9 +347,11 @@ public class DialogUtil {
                 isHorizontalButtons() ? 2 : 1
         );
         WrapperPlayServerShowDialog packet = new WrapperPlayServerShowDialog(dialog);
-        user.sendPacket(packet);
-        if (config.isDebug()) {
-            System.out.println("已通过 PacketEvents 发送对话框给 " + player.getName());
+        if (user != null) {
+            user.sendPacket(packet);
+            if (config.isDebug()) {
+                System.out.println("已通过 PacketEvents 发送对话框给 " + player.getName());
+            }
         }
     }
 
@@ -428,7 +430,7 @@ public class DialogUtil {
 
     // ====================== 更改密码对话框 ======================
 
-    public static DialogEncoder.DialogDefinition createChangePasswordDialog(Player player, String headText) {
+    public static DialogEncoder.DialogDefinition createChangePasswordDialog(String headText) {
         DialogEncoder.DialogDefinition def = createBaseDialog(changePasswordText("title"), headText);
         addInputControl(def, "old_password", changePasswordText("old_password_label"), 32);
         addInputControl(def, "new_password", changePasswordText("new_password_label"), 32);
@@ -443,7 +445,7 @@ public class DialogUtil {
         if (isHighServerVersion()) {
             sendNativeChangePasswordDialog(player, headText);
         } else {
-            sendDialog(player, createChangePasswordDialog(player, headText));
+            sendDialog(player, createChangePasswordDialog(headText));
         }
     }
 
