@@ -183,7 +183,27 @@ Do not modify files inside `default_configs`, changes will be overwritten automa
 
 This project is licensed under MIT License.
 
-The embedded [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library uses Apache 2.0 License.
+### Third-Party License Notices
+
+#### boosted-yaml
+
+This project embeds the [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library, which is licensed under Apache 2.0 License.
+
+Full license text: [`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
+
+#### JvmDowngrader
+
+This project uses [JvmDowngrader](https://github.com/unimined/JvmDowngrader) to downgrade Java 21 bytecode to Java 8-compatible bytecode during the build process.
+
+- **JvmDowngrader is used only during the build process** of this project. It is not distributed with the plugin and does not affect the final plugin artifact.
+- **End users**: Users who download and use this plugin (including those running paid servers) **do not need** to purchase any commercial license from the JvmDowngrader author.
+- **Plugin developers**: If you wish to use or modify the JvmDowngrader build process in your own project, please follow these licensing terms:
+  1. **Non-commercial use**: Licensed under LGPLv2.1, free to use;
+  2. **Commercial/profit use** (e.g., integrating JvmDowngrader into your own commercial product): A commercial license must be purchased from the author.
+
+Full license text and legal information: [`license-thirdparty/JvmDowngrader-LICENSE.md`](license-thirdparty/JvmDowngrader-LICENSE.md)
+
+> The main code of this project is licensed under MIT and is not subject to the LGPL copyleft of JvmDowngrader.
 
 ## Issues
 

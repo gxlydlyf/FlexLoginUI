@@ -28,17 +28,6 @@
         </repository>
     </distributionManagement>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>wagyourtail-releases</id>
-            <url>https://maven.wagyourtail.xyz/releases</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>wagyourtail-snapshots</id>
-            <url>https://maven.wagyourtail.xyz/snapshots</url>
-        </pluginRepository>
-    </pluginRepositories>
-
     <build>
         <plugins>
             <plugin>
@@ -115,6 +104,15 @@
                 <version>3.8.0</version>
                 <executions>
                     <execution>
+                        <!--
+                         JvmDowngrader
+                         Copyright (C) 2024 William Gray <jvmdowngrader@wagyourtail.xyz>
+                         Dual License: LGPLv2.1 (free non-commercial) / Commercial Support License (required for monetization)
+                         This plugin downloads JvmDowngrader CLI during build for bytecode downgrade workflow.
+                         Author statement: Final downgraded jar counts as Combined Work, FlexLoginUI core stays MIT licensed.
+                         Full rebuild workflow fully open in pom, satisfying LGPLv2.1 6.a requirement.
+                         Commercial use requires purchasing license via the author email above.
+                         -->
                         <id>fetch-jvmdowngrader-cli</id>
                         <phase>package</phase>
                         <goals>
@@ -164,6 +162,15 @@
                         </exclusions>
                     </dependency>
                 </dependencies>
+                <!--
+                 JvmDowngrader Build Execution Logic
+                 Copyright (C) 2024 William Gray <jvmdowngrader@wagyourtail.xyz>
+                 Dual License: LGPLv2.1 non-commercial free / commercial license required for monetization
+                 This antrun task runs JvmDowngrader CLI for bytecode downgrade and API stub shading.
+                 Modified workflow: Both original temporary jar and final released downgraded jar embed the third-party license file under META-INF/third-party.
+                 Full rebuild script open in pom complies with LGPLv2.1 Section 6.a; core FlexLoginUI code remains MIT licensed.
+                 Commercial usage must purchase official license via author email above.
+                 -->
                 <executions>
                     <!-- 第一步：字节码降级 -->
                     <execution>
@@ -217,8 +224,36 @@
                                     <arg value="original-${project.artifactId}-${project.version}-downgraded.jar"/>
                                     <arg value="${project.artifactId}-${project.version}-downgraded.jar"/>
                                 </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <!-- 最终处理 -->
+                    <execution>
+                        <id>downgrade-final-processing</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
                                 <!-- 降级完成，自动删除 cli 工具包 -->
                                 <delete file="${project.build.directory}/jvmdowngrader-cli-all.jar"/>
+                                <!-- 注入第三方许可到 original-downgraded.jar -->
+                                <jar update="true"
+                                     file="${project.build.directory}/original-${project.artifactId}-${project.version}-downgraded.jar">
+                                    <zipfileset dir="${project.basedir}/license-thirdparty"
+                                                prefix="META-INF/third-party/">
+                                        <include name="JvmDowngrader-LICENSE.md"/>
+                                    </zipfileset>
+                                </jar>
+                                <!-- 注入第三方许可到最终 downgraded.jar -->
+                                <jar update="true"
+                                     file="${project.build.directory}/${project.artifactId}-${project.version}-downgraded.jar">
+                                    <zipfileset dir="${project.basedir}/license-thirdparty"
+                                                prefix="META-INF/third-party/">
+                                        <include name="JvmDowngrader-LICENSE.md"/>
+                                    </zipfileset>
+                                </jar>
                             </target>
                         </configuration>
                     </execution>
@@ -369,22 +404,6 @@
             <groupId>dev.dejvokep</groupId>
             <artifactId>boosted-yaml</artifactId>
             <version>1.3.6</version>
-        </dependency>
-
-        <!-- JvmDowngrader CLI 可执行包，maven自动下载，不需要手动拿release -->
-        <dependency>
-            <groupId>xyz.wagyourtail.jvmdowngrader</groupId>
-            <artifactId>jvmdowngrader</artifactId>
-            <version>${jvmdg.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Java8 对应的api‑stub依赖 -->
-        <dependency>
-            <groupId>xyz.wagyourtail.jvmdowngrader</groupId>
-            <artifactId>jvmdowngrader-java-api</artifactId>
-            <version>${jvmdg.version}</version>
-            <classifier>downgraded-8</classifier>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

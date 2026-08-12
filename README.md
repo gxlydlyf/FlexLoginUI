@@ -174,7 +174,27 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 本项目使用 MIT License 开源。
 
-附加了 [boosted-yaml](https://github.com/dejvokep/boosted-yaml) 项目，采用 Apache 2.0 许可。
+### 第三方工具许可说明
+
+#### boosted-yaml
+
+本项目附加了 [boosted-yaml](https://github.com/dejvokep/boosted-yaml) 库，采用 Apache 2.0 许可。
+
+完整许可文本见：[`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
+
+#### JvmDowngrader
+
+本项目构建时使用 [JvmDowngrader](https://github.com/unimined/JvmDowngrader) 将 Java 21 字节码降级为兼容 Java 8 的字节码。
+
+- **JvmDowngrader 仅用于本项目构建过程**，不会随插件分发，也不影响最终生成的插件文件。
+- **最终用户**：下载并使用本插件的用户（包括运营付费服务器的用户）**无需**向 JvmDowngrader 作者购买任何商业许可。
+- **插件开发者**：如需在自己的项目中使用或修改 JvmDowngrader 构建流程，请遵循以下授权规则：
+  1. **非商用场景**：遵循 LGPLv2.1 协议，免费使用；
+  2. **商用/盈利场景**（如将 JvmDowngrader 集成到自己的商业产品中）：必须向作者购买商业授权。
+
+完整授权文本与法律说明：[`license-thirdparty/JvmDowngrader-LICENSE.md`](license-thirdparty/JvmDowngrader-LICENSE.md)
+
+> 本项目主体代码采用 MIT 协议开源，不受 JvmDowngrader LGPL 协议传染。
 
 ## 问题
 
