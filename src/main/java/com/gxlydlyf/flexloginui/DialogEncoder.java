@@ -7,18 +7,10 @@ import java.util.*;
 
 public class DialogEncoder {
 
-    // ----- Text Component 帮助类 -----
-    public static class TextComponent {
-        public String text;
-        public String color;
-
+    // ----- Text Component 帮助类 (Java 21 Record) -----
+    public record TextComponent(String text, String color) {
         public TextComponent(String text) {
-            this.text = text;
-        }
-
-        public TextComponent(String text, String color) {
-            this.text = text;
-            this.color = color;
+            this(text, null);
         }
     }
 
@@ -44,41 +36,34 @@ public class DialogEncoder {
             children.add(() -> NbtEncoder.tagString(buf, "type", type));
 
             switch (type) {
-                // 原有普通类型
-                case "run_command":
-                case "suggest_command":
+                case "run_command", "suggest_command" -> {
                     if (command != null)
                         children.add(() -> NbtEncoder.tagString(buf, "command", command));
-                    break;
-                case "open_url":
+                }
+                case "open_url" -> {
                     if (url != null)
                         children.add(() -> NbtEncoder.tagString(buf, "url", url));
-                    break;
-                case "copy_to_clipboard":
+                }
+                case "copy_to_clipboard" -> {
                     if (value != null)
                         children.add(() -> NbtEncoder.tagString(buf, "value", value));
-                    break;
-
-                // dynamic/custom: 动态自定义数据包
-                case "dynamic/custom":
+                }
+                case "dynamic/custom" -> {
                     if (customId != null)
                         children.add(() -> NbtEncoder.tagString(buf, "id", customId));
-                    // additions 是可选的，如果存在且非空则写入复合标签
-                    // 直接写入 additions 数据
                     if (customAdditions != null && customAdditions.isReadable()) {
                         children.add(() -> {
-                            NbtEncoder.startTag(buf, 10, "additions"); // 复合标签
+                            NbtEncoder.startTag(buf, 10, "additions");
                             buf.writeBytes(customAdditions);
-                            buf.writeByte(0x00); // 结束复合标签
+                            buf.writeByte(0x00);
                         });
                     }
-                    break;
-
-                // dynamic/run_command: 动态命令模板
-                case "dynamic/run_command":
+                }
+                case "dynamic/run_command" -> {
                     if (commandTemplate != null)
                         children.add(() -> NbtEncoder.tagString(buf, "template", commandTemplate));
-                    break;
+                }
+                default -> {}
             }
 
             NbtEncoder.writeCompoundPayload(buf, children);
@@ -329,15 +314,15 @@ public class DialogEncoder {
 
     // ---------- 辅助: 写入 TextComponent 标签 ----------
     private static void writeTextComponentTag(ByteBuf buf, String name, TextComponent comp) {
-        if (comp.color == null) {
+        if (comp.color() == null) {
             // 纯字符串
-            NbtEncoder.tagString(buf, name, comp.text);
+            NbtEncoder.tagString(buf, name, comp.text());
         } else {
             // 复合组件 {text, color}
-            List<Runnable> children = new ArrayList<>();
-            children.add(() -> NbtEncoder.tagString(buf, "text", comp.text));
-            children.add(() -> NbtEncoder.tagString(buf, "color", comp.color));
-            NbtEncoder.tagCompound(buf, name, children);
+            NbtEncoder.tagCompound(buf, name, List.of(
+                    () -> NbtEncoder.tagString(buf, "text", comp.text()),
+                    () -> NbtEncoder.tagString(buf, "color", comp.color())
+            ));
         }
     }
 

@@ -273,16 +273,9 @@ public class AuthMeUtil {
             return defaultValue;
         }
 
-        if (property instanceof Field field) {
-            try {
-                property = field.get(null);
-            } catch (IllegalAccessException e) {
-                return defaultValue;
-            }
-        }
-
         try {
-            return getPropertyMethod.invoke(commonService, property);
+            var resolved = (property instanceof Field field) ? field.get(null) : property;
+            return getPropertyMethod.invoke(commonService, resolved);
         } catch (Exception e) {
             return defaultValue;
         }

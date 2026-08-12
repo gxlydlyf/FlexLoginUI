@@ -21,7 +21,8 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.gxlydlyf.flexloginui.DialogUtil.*;
@@ -108,16 +109,13 @@ public class AnvilUtil {
         }
 
         public void restoreAnvilPage(Player player, boolean refresh) {
-            if (isType(AnvilPageType.LOGIN)) {
-                AnvilUtil.openLoginAnvil(player, tip, refresh);
-            } else if (isType(AnvilPageType.REGISTER)) {
-                AnvilUtil.openRegisterAnvil(player, tip, refresh);
-            } else if (isType(AnvilPageType.LOGIN_CAPTCHA)) {
-                AnvilUtil.openLogCaptchaAnvil(player, tip, refresh);
-            } else if (isType(AnvilPageType.REGISTER_CAPTCHA)) {
-                AnvilUtil.openRegCaptchaAnvil(player, tip, refresh);
-            } else if (isType(AnvilPageType.CHANGE_PASSWORD)) {
-                AnvilUtil.openChangePasswordAnvil(player, tip, refresh);
+            switch (type) {
+                case LOGIN -> AnvilUtil.openLoginAnvil(player, tip, refresh);
+                case REGISTER -> AnvilUtil.openRegisterAnvil(player, tip, refresh);
+                case LOGIN_CAPTCHA -> AnvilUtil.openLogCaptchaAnvil(player, tip, refresh);
+                case REGISTER_CAPTCHA -> AnvilUtil.openRegCaptchaAnvil(player, tip, refresh);
+                case CHANGE_PASSWORD -> AnvilUtil.openChangePasswordAnvil(player, tip, refresh);
+                default -> {}
             }
         }
 
@@ -201,7 +199,7 @@ public class AnvilUtil {
         WrapperPlayServerWindowItems items = new WrapperPlayServerWindowItems(
                 windowId,
                 STATE_ID,
-                Arrays.asList(leftItem, rightItem, outputItem),
+                List.of(leftItem, rightItem, outputItem),
                 ItemStack.EMPTY
         );
         user.sendPacket(items);
@@ -345,10 +343,7 @@ public class AnvilUtil {
 
             // 设置 Lore
             if (loreList != null) {
-                List<Component> loreComponents = new java.util.ArrayList<>();
-                for (String line : loreList) {
-                    loreComponents.add(newTextComponent(line));
-                }
+                var loreComponents = loreList.stream().map(AnvilUtil::newTextComponent).toList();
                 item.setComponent(ComponentTypes.LORE, new ItemLore(loreComponents));
             }
         } else {
@@ -365,9 +360,9 @@ public class AnvilUtil {
             // Lore
             if (loreList != null && !loreList.isEmpty()) {
                 NBTList<NBTString> lore = new NBTList<>(NBTType.STRING);
-                for (String line : loreList) {
-                    lore.addTag(new NBTString(GsonComponentSerializer.gson().serialize(newTextComponent(line))));
-                }
+                loreList.stream()
+                        .map(line -> new NBTString(GsonComponentSerializer.gson().serialize(newTextComponent(line))))
+                        .forEach(lore::addTag);
                 display.setTag("Lore", lore);
             }
 

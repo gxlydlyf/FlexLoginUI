@@ -165,10 +165,10 @@ public class HookShowDialogTranslator extends PacketTranslator<ClientboundShowDi
         DialogButton cancelButton = null;
         List<NbtMap> actionTags = dialogNbt.getList("actions", org.cloudburstmc.nbt.NbtType.COMPOUND);
         for (NbtMap actionTag : actionTags) {
-            Optional<DialogButton> btn = DialogButton.read(Optional.of(session), actionTag,
+            var btnOpt = DialogButton.read(Optional.of(session), actionTag,
                     key -> JavaRegistries.DIALOG.networkId(session, key));
-            if (btn.isPresent()) {
-                DialogButton button = btn.get();
+            if (btnOpt.isPresent()) {
+                DialogButton button = btnOpt.get();
                 String actionId = actionTag.getCompound("action").getString("id");
                 if (actionId.contains("submit")) {
                     submitButton = button;

@@ -4,7 +4,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -142,18 +141,12 @@ public class ConfigUtil extends ConfigAbstract {
     }
 
     public static void initLangFiles() {
-        initLangFiles(Arrays.asList(
-                "zh_CN.yml",
-                "en.yml"
-        ));
+        initLangFiles(List.of("zh_CN.yml", "en.yml"));
     }
 
 
     public static void initDefaultConfigs() {
-        initDefaultConfigs(Arrays.asList(
-                "zh_CN.yml",
-                "en.yml"
-        ));
+        initDefaultConfigs(List.of("zh_CN.yml", "en.yml"));
     }
 
     public static String getLangText(String path) {

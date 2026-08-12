@@ -80,19 +80,18 @@ public class PacketListeners implements PacketListener, Listener {
         PacketTypeCommon packetTypeCommon = e.getPacketType();
         if (packetTypeCommon instanceof PacketType.Play.Client clientType) {
             switch (clientType) {
-                case NAME_ITEM:
+                case NAME_ITEM -> {
                     if (AnvilUtil.isActiveAnvilPage(uuid)) {
                         AnvilUtil.getAnvilPage(uuid).input = new WrapperPlayClientNameItem(e).getItemName();
                         refreshCustomAnvil(player);
                     }
-                    break;
-                case CLICK_WINDOW: {
+                }
+                case CLICK_WINDOW -> {
                     if (!AnvilUtil.isActiveAnvilPage(uuid)) {
                         return;
                     }
-                    WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(e);
+                    var packet = new WrapperPlayClientClickWindow(e);
                     int windowId = packet.getWindowId();
-                    // 只处理我们的铁砧窗口
                     if (!isCustomAnvil(windowId)) return;
                     e.setCancelled(true);
                     refreshCustomAnvil(player);
@@ -117,9 +116,7 @@ public class PacketListeners implements PacketListener, Listener {
                         } else {
                             disallowCloseKick(player, anvilPage);
                         }
-                    }
-                    // 点击输出槽 2
-                    else if (slot == 2) {
+                    } else if (slot == 2) {
                         user.closeInventory();
                         String inputText = anvilPage.input;
 
@@ -141,11 +138,9 @@ public class PacketListeners implements PacketListener, Listener {
                                 if (anvilPage.isChangePwdConfirm()) {
                                     onPlayerSubmitChangePassword(player, anvilPage.oldPassword, anvilPage.newPassword, inputText, true);
                                 } else if (anvilPage.isChangePwdNew()) {
-                                    // 步骤2：输入新密码 → 直接进入确认步骤
                                     anvilPage.newPassword = inputText;
                                     AnvilUtil.openChangePasswordAnvil(player, changePasswordText("tip_confirm"), false);
                                 } else {
-                                    // 步骤1：输入旧密码 → 立即校验
                                     if (!authMeApi.checkPassword(player.getName(), inputText)) {
                                         player.sendMessage(changePasswordText("wrong_password"));
                                         AnvilUtil.openChangePasswordAnvil(player, changePasswordText("tip_old") + "\n" + changePasswordText("wrong_password"), false);
@@ -160,9 +155,8 @@ public class PacketListeners implements PacketListener, Listener {
                         }
                     }
                     Bukkit.getScheduler().runTask(FlexLoginUI.instance, player::updateInventory);
-                    break;
                 }
-                case CLOSE_WINDOW: {
+                case CLOSE_WINDOW -> {
                     if (!AnvilUtil.isActiveAnvilPage(uuid)) {
                         return;
                     }
@@ -170,20 +164,20 @@ public class PacketListeners implements PacketListener, Listener {
                     if (isCustomAnvil(windowId)) {
                         AnvilPage anvilPage = AnvilUtil.getAnvilPage(uuid);
                         if (!authMeApi.isUnrestricted(player) && (!authMeApi.isAuthenticated(player) || anvilPage.isChangePassword())) {
-                            if (!anvilPage.isManuallyClose()) {
-                                if (!player.isDead()) {
-                                    anvilPage.restoreAnvilPage(player);
-                                    break;
-                                }
+                            if (!anvilPage.isManuallyClose() && !player.isDead()) {
+                                anvilPage.restoreAnvilPage(player);
+                            } else {
+                                AnvilUtil.closeAnvilPage(uuid);
+                                user.closeInventory();
                             }
+                        } else {
+                            AnvilUtil.closeAnvilPage(uuid);
+                            user.closeInventory();
                         }
-                        AnvilUtil.closeAnvilPage(uuid);
-                        user.closeInventory();
                     }
-                    break;
                 }
-                case CUSTOM_CLICK_ACTION: {
-                    WrapperPlayClientCustomClickAction packet = new WrapperPlayClientCustomClickAction(e);
+                case CUSTOM_CLICK_ACTION -> {
+                    var packet = new WrapperPlayClientCustomClickAction(e);
                     String id = packet.getId().toString();
                     boolean isLogin = id.equals(DialogUtil.LOGIN_DIALOG_ID);
                     boolean isRegister = id.equals(DialogUtil.REGISTER_DIALOG_ID);
@@ -193,35 +187,24 @@ public class PacketListeners implements PacketListener, Listener {
                     NBT nbt = packet.getPayload();
                     if (nbt instanceof NBTCompound payload) {
                         boolean close = payload.getBooleanOr("close", false);
-                        if (isLogin || isRegister) {
-                            handleCustomClickAction(
-                                    player,
-                                    isLogin,
-                                    close,
-                                    payload.getStringTagValueOrDefault("password", ""),
-                                    payload.getStringTagValueOrDefault("confirm", "")
-                            );
-                        } else if (isLogCaptcha || isRegCaptcha) {
-                            handleCaptchaCustomClickAction(
-                                    player,
-                                    isLogCaptcha,
-                                    close,
-                                    payload.getStringTagValueOrDefault("captcha", "")
-                            );
-                        } else if (isChangePassword) {
-                            handleChangePasswordClickAction(
-                                    player,
-                                    close,
-                                    payload.getStringTagValueOrDefault("old_password", ""),
-                                    payload.getStringTagValueOrDefault("new_password", ""),
-                                    payload.getStringTagValueOrDefault("confirm", "")
-                            );
+                        switch (id) {
+                            case String s when isLogin || isRegister ->
+                                handleCustomClickAction(player, isLogin, close,
+                                        payload.getStringTagValueOrDefault("password", ""),
+                                        payload.getStringTagValueOrDefault("confirm", ""));
+                            case String s when isLogCaptcha || isRegCaptcha ->
+                                handleCaptchaCustomClickAction(player, isLogCaptcha, close,
+                                        payload.getStringTagValueOrDefault("captcha", ""));
+                            case String s when isChangePassword ->
+                                handleChangePasswordClickAction(player, close,
+                                        payload.getStringTagValueOrDefault("old_password", ""),
+                                        payload.getStringTagValueOrDefault("new_password", ""),
+                                        payload.getStringTagValueOrDefault("confirm", ""));
+                            default -> {}
                         }
                     }
-                    break;
                 }
-                default:
-                    break;
+                default -> {}
             }
         }
     }

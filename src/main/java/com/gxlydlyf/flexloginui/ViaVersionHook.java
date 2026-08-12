@@ -36,34 +36,20 @@ public class ViaVersionHook {
                 // 1. 读取 ID
                 Key identifier = wrapper.passthrough(Types.IDENTIFIER);
 
-                boolean isLogin = identifier.equals(DialogUtil.LOGIN_DIALOG_ID);
-                boolean isRegister = identifier.equals(DialogUtil.REGISTER_DIALOG_ID);
-
-                boolean isLogCaptcha = identifier.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID);
-                boolean isRegCaptcha = identifier.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID);
-
+                String idStr = identifier.toString();
                 // 2. 读取 NBT
                 Tag payloadTag = wrapper.passthrough(Types.CUSTOM_CLICK_ACTION_TAG);
-                // 核心：读取 password
-                if (payloadTag instanceof CompoundTag compound) { // 转成 CompoundTag
+                if (payloadTag instanceof CompoundTag compound) {
                     boolean close = compound.getBoolean("close", false);
                     Player player = getPlayer(wrapper.user());
-//                        System.out.println("Payload: " + payloadTag);
-                    if (isLogin || isRegister) {
-                        PacketListeners.handleCustomClickAction(
-                                player,
-                                isLogin,
-                                close,
-                                compound.getString("password"),
-                                compound.getString("confirm")
-                        );
-                    } else if (isLogCaptcha || isRegCaptcha) {
-                        PacketListeners.handleCaptchaCustomClickAction(
-                                player,
-                                isLogCaptcha,
-                                close,
-                                compound.getString("captcha")
-                        );
+                    switch (idStr) {
+                        case String s when s.equals(DialogUtil.LOGIN_DIALOG_ID) || s.equals(DialogUtil.REGISTER_DIALOG_ID) ->
+                            PacketListeners.handleCustomClickAction(player, s.equals(DialogUtil.LOGIN_DIALOG_ID), close,
+                                    compound.getString("password"), compound.getString("confirm"));
+                        case String s when s.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID) || s.equals(DialogUtil.REGISTER_CAPTCHA_DIALOG_ID) ->
+                            PacketListeners.handleCaptchaCustomClickAction(player, s.equals(DialogUtil.LOGIN_CAPTCHA_DIALOG_ID), close,
+                                    compound.getString("captcha"));
+                        default -> {}
                     }
                 }
 

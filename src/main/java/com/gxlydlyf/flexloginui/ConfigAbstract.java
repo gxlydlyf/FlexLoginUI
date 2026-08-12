@@ -39,7 +39,7 @@ public abstract class ConfigAbstract {
         if (plugin == null) plugin = FlexLoginUI.instance;
         this.plugin = plugin;
         this.configFileName = externalConfigPath;
-        this.configFile = new File(plugin.getDataFolder(), externalConfigPath);
+        this.configFile = new File(this.plugin.getDataFolder(), externalConfigPath);
         this.resourceFilePath = internalResourcePath;
         this.configVersionKey = configVersionKey;
         this.latestVersion = getLatestVersion();
@@ -98,11 +98,12 @@ public abstract class ConfigAbstract {
 
             // 6. 输出版本更新日志
             if (currentVersion != latestVersion) {
-                plugin.getLogger().info("Config file " + configFile.getName() + " has been updated from v" + currentVersion + " to v" + latestVersion);
+                plugin.getLogger().info("Config file %s has been updated from v%d to v%d".formatted(
+                        configFile.getName(), currentVersion, latestVersion));
             }
 
         } catch (IOException e) {
-            plugin.getLogger().severe("Failed to load config file " + configFile.getName() + ": " + e.getMessage());
+            plugin.getLogger().severe("Failed to load config file %s: %s".formatted(configFile.getName(), e.getMessage()));
             e.printStackTrace();
         }
     }
@@ -135,7 +136,7 @@ public abstract class ConfigAbstract {
                     .format(java.time.LocalDateTime.now());
 
             // 备份文件名：配置文件名.v旧版本号.时间戳.bak
-            String backupFileName = String.format("%s.v%d.%s.bak",
+            String backupFileName = "%s.v%d.%s.bak".formatted(
                     configFile.getName(),
                     oldVersion,
                     timestamp);
@@ -164,7 +165,7 @@ public abstract class ConfigAbstract {
         try {
             config.save();
         } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save config file " + configFile.getName() + ": " + e.getMessage());
+            plugin.getLogger().severe("Failed to save config file %s: %s".formatted(configFile.getName(), e.getMessage()));
         }
     }
 

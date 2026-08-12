@@ -120,11 +120,7 @@ public class DialogUtil {
         // 按钮
         addButtonWithAction(def, regButtonText, REGISTER_DIALOG_ID);
         addExitButton(def, closeButtonText, REGISTER_DIALOG_ID);
-        if (isHorizontalButtons()) {
-            def.columns = 2;
-        } else {
-            def.columns = 1;
-        }
+        def.columns = isHorizontalButtons() ? 2 : 1;
 
         return def;
     }
@@ -138,11 +134,7 @@ public class DialogUtil {
 
         addButtonWithAction(def, submitButtonText, actionId);
         addExitButton(def, closeButtonText, actionId);
-        if (isHorizontalButtons()) {
-            def.columns = 2;
-        } else {
-            def.columns = 1;
-        }
+        def.columns = isHorizontalButtons() ? 2 : 1;
 
         return def;
     }
@@ -443,11 +435,7 @@ public class DialogUtil {
         addInputControl(def, "confirm", changePasswordText("confirm_label"), 32);
         addButtonWithAction(def, changePasswordText("change_button"), CHANGE_PASSWORD_DIALOG_ID);
         addExitButton(def, getChangePasswordCloseButtonText(), CHANGE_PASSWORD_DIALOG_ID);
-        if (isHorizontalButtons()) {
-            def.columns = 2;
-        } else {
-            def.columns = 1;
-        }
+        def.columns = isHorizontalButtons() ? 2 : 1;
         return def;
     }
 
