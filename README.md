@@ -15,13 +15,10 @@
 
 ### 必要依赖
 
-- Java 17 及以上
-- 插件服务器 1.17 及以上 （仅在 PurpurMC 经过测试）
+- Java 8 及以上
+- 插件服务器 1.14 及以上 （仅在 PurpurMC 经过测试）
 - [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
-
-若你使用 Java 17 运行 1.17 版本 的服务端并提示Java 版本过高，请改用 Paper
-MC 或 PurpurMC 服务端，并在启动命令中添加参数：`-DPaper.IgnoreJavaVersion=true`
 
 ### 可选依赖
 
@@ -33,7 +30,12 @@ MC 或 PurpurMC 服务端，并在启动命令中添加参数：`-DPaper.IgnoreJ
 
 ### 插件本体
 
-在 [release](https://github.com/gxlydlyf/FlexLoginUI/release) 下载插件，放入服务器根目录下 `plugins` 文件夹，然后重启游戏。
+在 [release](https://github.com/gxlydlyf/FlexLoginUI/release) 下载插件。
+
+- 文件名带 `-downgraded` 后缀的版本（如 `FlexLoginUI-1.3.1-downgraded.jar`）适用于 **Java 8 ~ 20**
+- 文件名不带 `-downgraded` 后缀的版本（如 `FlexLoginUI-1.3.1.jar`）适用于 **Java 21 及以上**
+
+将下载的插件放入服务器根目录下 `plugins` 文件夹，然后重启游戏。
 
 ## 游戏演示
 

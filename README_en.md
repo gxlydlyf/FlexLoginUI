@@ -20,13 +20,10 @@ forms for Geyser Bedrock Edition players.
 
 ### Required Dependencies
 
-- Java 17 or above
-- Server version 1.17 or above (Only tested on PurpurMC)
+- Java 8 or above
+- Server version 1.14 or above (Only tested on PurpurMC)
 - [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
-
-If you run a 1.17 server with Java 17 and get a prompt saying the Java version is too new, use PaperMC or PurpurMC
-instead, and add `-DPaper.IgnoreJavaVersion=true` to your startup command.
 
 ### Optional Dependencies
 
@@ -39,8 +36,12 @@ instead, and add `-DPaper.IgnoreJavaVersion=true` to your startup command.
 
 ### Plugin Setup
 
-Download the plugin from [release](https://github.com/gxlydlyf/FlexLoginUI/release), place it into the `plugins` folder
-under server root directory, then restart the server.
+Download the plugin from [release](https://github.com/gxlydlyf/FlexLoginUI/release).
+
+- The version with `-downgraded` suffix (e.g. `FlexLoginUI-1.3.1-downgraded.jar`) is for **Java 8 ~ 20**
+- The version without `-downgraded` suffix (e.g. `FlexLoginUI-1.3.1.jar`) is for **Java 21 and above**
+
+Place the downloaded jar into the `plugins` folder under server root directory, then restart the server.
 
 ## Game Preview
 
