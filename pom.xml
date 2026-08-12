@@ -115,7 +115,7 @@
                 <version>3.8.0</version>
                 <executions>
                     <execution>
-                        <id>fetch‑jvmdg‑cli</id>
+                        <id>fetch-jvmdowngrader-cli</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy</goal>
@@ -167,7 +167,7 @@
                 <executions>
                     <!-- 第一步：字节码降级 -->
                     <execution>
-                        <id>downgrade</id>
+                        <id>downgrade-jvm</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
@@ -186,7 +186,7 @@
                                     <arg value="downgrade"/>
                                     <arg value="-t"/>
                                     <arg value="${project.artifactId}-${project.version}.jar"/>
-                                    <arg value="temp-downgrade.jar"/>
+                                    <arg value="original-${project.artifactId}-${project.version}-downgraded.jar"/>
                                     <!-- 将整个 classpath 作为 -cp 的一个参数 -->
                                     <arg value="-cp"/>
                                     <!--suppress MavenModelInspection -->
@@ -197,7 +197,7 @@
                     </execution>
                     <!-- 第二步：内嵌 API stub -->
                     <execution>
-                        <id>shade-api</id>
+                        <id>shade-jvmdg-api-stub</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
@@ -214,9 +214,11 @@
                                     <arg value="-p"/>
                                     <arg value="com/gxlydlyf/flexloginui"/>
                                     <arg value="-t"/>
-                                    <arg value="temp-downgrade.jar"/>
+                                    <arg value="original-${project.artifactId}-${project.version}-downgraded.jar"/>
                                     <arg value="${project.artifactId}-${project.version}-downgraded.jar"/>
                                 </java>
+                                <!-- 降级完成，自动删除 cli 工具包 -->
+                                <delete file="${project.build.directory}/jvmdowngrader-cli-all.jar"/>
                             </target>
                         </configuration>
                     </execution>

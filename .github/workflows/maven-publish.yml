@@ -45,10 +45,10 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
-          files: target/flexloginui-${{ env.VERSION }}.jar
+          files: |
+            - target/flexloginui-${{ env.VERSION }}.jar
+            - target/flexloginui-${{ env.VERSION }}-downgraded.jar
           token: ${{ secrets.RELEASE_PAT }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
 
       - name: Publish to GitHub Packages Apache Maven
         run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
