@@ -1,17 +1,12 @@
 package com.gxlydlyf.flexloginui;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.gxlydlyf.flexloginui.nbt.DialogEncoder;
 import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.connection.UserConnection;
-import com.viaversion.viaversion.api.protocol.packet.Direction;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
-import java.util.Objects;
-
-import static com.gxlydlyf.flexloginui.PacketListeners.getUser;
 
 public class ViaVersionUtil {
     public static boolean enabled = false;
@@ -67,10 +62,21 @@ public class ViaVersionUtil {
     }
 
     @SuppressWarnings("unchecked")
+    public static ProtocolVersion getPlayerProtocolVersion(Player player) {
+        return Via.getAPI().getPlayerProtocolVersion(player);
+    }
+
+    public static boolean isClientOlderThanV1_14(Player player) {
+        if (!enabled) {
+            return AnvilVersion.isServerOlderThanV1_14();
+        }
+        return getPlayerProtocolVersion(player).olderThan(ProtocolVersion.v1_14);
+    }
+
     public static boolean isLowVersion(Player player) {
         if (!enabled) {
             return !DialogUtil.isHighServerVersion();
         }
-        return Via.getAPI().getPlayerProtocolVersion(player).olderThan(ProtocolVersion.v1_21_6);
+        return getPlayerProtocolVersion(player).olderThan(ProtocolVersion.v1_21_6);
     }
 }

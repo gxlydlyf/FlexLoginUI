@@ -1,6 +1,5 @@
 package com.gxlydlyf.flexloginui;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.chat.clickevent.CustomClickEvent;
 import com.github.retrooper.packetevents.protocol.dialog.CommonDialogData;
@@ -18,6 +17,8 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerShowDialog;
+import com.gxlydlyf.flexloginui.nbt.DialogEncoder;
+import com.gxlydlyf.flexloginui.nbt.NbtEncoder;
 import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.ViaAPI;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
@@ -29,6 +30,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Objects;
 
+import static com.gxlydlyf.flexloginui.FlexLoginUI.serverVersion;
 import static com.gxlydlyf.flexloginui.PacketListeners.getUser;
 import static com.gxlydlyf.flexloginui.ViaVersionUtil.sendDialog;
 
@@ -159,7 +161,7 @@ public class DialogUtil {
     }
 
     public static boolean isHighServerVersion() {
-        return PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_6);
+        return serverVersion.isNewerThanOrEquals(ServerVersion.V_1_21_6);
     }
 
     public static String loginText(String key) {

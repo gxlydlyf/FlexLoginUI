@@ -1,24 +1,12 @@
 package com.gxlydlyf.flexloginui;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
-import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemLore;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
-import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
-import com.github.retrooper.packetevents.protocol.nbt.NBTList;
-import com.github.retrooper.packetevents.protocol.nbt.NBTString;
-import com.github.retrooper.packetevents.protocol.nbt.NBTType;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCloseWindow;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
-import io.github.retrooper.packetevents.adventure.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -32,20 +20,7 @@ import static com.gxlydlyf.flexloginui.PacketListeners.getUser;
 public class AnvilUtil {
     // ====================== 固定常量 ======================
     public static final int WINDOW_ID = 58;
-    private static int ANVIL_WINDOW_TYPE = 7;
-    private static final int STATE_ID = 0;
     public static final ConcurrentHashMap<UUID, AnvilPage> OPENED_ANVIL = new ConcurrentHashMap<>();
-
-    public static void setAnvilWindowType() {
-        ServerVersion version = PacketEvents.getAPI().getServerManager().getVersion();
-        if (version.isNewerThanOrEquals(ServerVersion.V_26_1)) {
-            ANVIL_WINDOW_TYPE = MinecraftUtil.getAnvilMenuId();
-        } else if (version.isNewerThanOrEquals(ServerVersion.V_1_20_3)) {
-            ANVIL_WINDOW_TYPE = 8;
-        } else if (version.isNewerThanOrEquals(ServerVersion.V_1_14)) {
-            ANVIL_WINDOW_TYPE = 7;
-        }
-    }
 
     public enum AnvilPageType {
         REGISTER,
@@ -63,6 +38,7 @@ public class AnvilUtil {
         public String newPassword = null;
         private boolean manuallyClose = false;
         public String tip = "";
+        private int stateId = 0;
 
         public boolean hasType() {
             return type != null;
@@ -115,7 +91,8 @@ public class AnvilUtil {
                 case LOGIN_CAPTCHA -> AnvilUtil.openLogCaptchaAnvil(player, tip, refresh);
                 case REGISTER_CAPTCHA -> AnvilUtil.openRegCaptchaAnvil(player, tip, refresh);
                 case CHANGE_PASSWORD -> AnvilUtil.openChangePasswordAnvil(player, tip, refresh);
-                default -> {}
+                default -> {
+                }
             }
         }
 
@@ -126,10 +103,23 @@ public class AnvilUtil {
         public void setType(AnvilPageType type) {
             this.type = type;
         }
+
+        public int nextStateId() {
+            return ++stateId;
+        }
     }
 
     public static void createAnvilPage(UUID uuid) {
         OPENED_ANVIL.computeIfAbsent(uuid, k -> new AnvilPage());
+    }
+
+    public static int nextStateId(UUID uuid) {
+        AnvilPage page = getAnvilPage(uuid);
+        return page != null ? page.nextStateId() : 0;
+    }
+
+    public static int nextStateId(Player player) {
+        return nextStateId(player.getUniqueId());
     }
 
     public static void closeAnvilPage(UUID uuid) {
@@ -141,12 +131,20 @@ public class AnvilUtil {
     }
 
     public static AnvilPage getAnvilPage(UUID uuid) {
-        createAnvilPage(uuid);
         return OPENED_ANVIL.get(uuid);
     }
 
     public static AnvilPage getAnvilPage(Player player) {
         return getAnvilPage(player.getUniqueId());
+    }
+
+    public static AnvilPage getOrCreateAnvilPage(UUID uuid) {
+        createAnvilPage(uuid);
+        return getAnvilPage(uuid);
+    }
+
+    public static AnvilPage getOrCreateAnvilPage(Player player) {
+        return getOrCreateAnvilPage(player.getUniqueId());
     }
 
     public static boolean isActiveAnvilPage(UUID uuid) {
@@ -175,10 +173,8 @@ public class AnvilUtil {
                                  ItemStack rightItem,
                                  ItemStack outputItem,
                                  int windowId, boolean refresh) {
-        AnvilPage page = getAnvilPage(player.getUniqueId());
-        if (page != null) {
-            page.manuallyClose(false);
-        }
+        AnvilPage page = getOrCreateAnvilPage(player);
+        page.manuallyClose(false);
 
         User user = getUser(player);
         if (user == null) {
@@ -187,22 +183,27 @@ public class AnvilUtil {
 
         // 1. 打开铁砧窗口
         if (!refresh) {
-            WrapperPlayServerOpenWindow open = new WrapperPlayServerOpenWindow(
-                    windowId,
-                    ANVIL_WINDOW_TYPE,
-                    title
-            );
-            user.sendPacket(open);
+            AnvilVersion.sendServerAnvilWindow(player, windowId, title);
         }
 
+        int stateId = page.nextStateId();
         // 2. 设置所有槽位物品
         WrapperPlayServerWindowItems items = new WrapperPlayServerWindowItems(
                 windowId,
-                STATE_ID,
+                stateId,
                 List.of(leftItem, rightItem, outputItem),
                 ItemStack.EMPTY
         );
+
+        // 额外确保第 3 槽物品
+        WrapperPlayServerSetSlot outputSlot = new WrapperPlayServerSetSlot(
+                windowId,
+                stateId,
+                2,
+                outputItem
+        );
         user.sendPacket(items);
+        user.sendPacket(outputSlot);
     }
 
     public static void closeAnvil(Player player, int windowId) {
@@ -242,9 +243,9 @@ public class AnvilUtil {
         if (msg == null) {
             msg = "";
         }
-        ItemStack left = createItem(ItemTypes.REDSTONE, "", List.of(closeText));
-        ItemStack right = createItem(ItemTypes.PAPER, title, List.of(msg.split("\n")));
-        ItemStack output = createItem(ItemTypes.ARROW, submitText, null);
+        ItemStack left = AnvilVersion.createItem(ItemTypes.REDSTONE, "", List.of(closeText));
+        ItemStack right = AnvilVersion.createItem(ItemTypes.PAPER, title, List.of(msg.split("\n")));
+        ItemStack output = AnvilVersion.createItem(ItemTypes.ARROW, submitText, null);
         if (!msg.isEmpty()) {
             title = title + "-" + msg.replace("\n", " ");
         }
@@ -318,68 +319,5 @@ public class AnvilUtil {
 
     public static void openChangePasswordAnvil(Player player) {
         openChangePasswordAnvil(player, false);
-    }
-
-    // ====================== 通用物品构建器（核心） ======================
-
-    /**
-     * 创建自定义物品：名称 + Lore（自动白色、无格式、正体）
-     * 满足你需求：左侧物品名称会自动放入 Lore 第一行
-     *
-     * @param type     物品类型
-     * @param name     显示名
-     * @param loreList Lore
-     * @return 构建好的物品
-     */
-    public static ItemStack createItem(ItemType type, String name, List<String> loreList) {
-        ItemStack item = ItemStack.builder().type(type).amount(1).build();
-        if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20_5)) {
-            // 新数据组件
-            // 设置物品名称
-            if (name != null) {
-                Component nameComponent = newTextComponent(name);
-                item.setComponent(ComponentTypes.CUSTOM_NAME, nameComponent);
-            }
-
-            // 设置 Lore
-            if (loreList != null) {
-                var loreComponents = loreList.stream().map(AnvilUtil::newTextComponent).toList();
-                item.setComponent(ComponentTypes.LORE, new ItemLore(loreComponents));
-            }
-        } else {
-            // 旧 NBT
-            NBTCompound root = item.getOrCreateTag();
-            NBTCompound display = new NBTCompound();
-
-            // 显示名
-            if (name != null) {
-                Component nameComp = newTextComponent(name);
-                display.setTag("Name", new NBTString(GsonComponentSerializer.gson().serialize(nameComp)));
-            }
-
-            // Lore
-            if (loreList != null && !loreList.isEmpty()) {
-                NBTList<NBTString> lore = new NBTList<>(NBTType.STRING);
-                loreList.stream()
-                        .map(line -> new NBTString(GsonComponentSerializer.gson().serialize(newTextComponent(line))))
-                        .forEach(lore::addTag);
-                display.setTag("Lore", lore);
-            }
-
-
-            root.setTag("display", display);
-        }
-        return item;
-    }
-
-    // ====================== 文本样式统一（白色 + 正体） ======================
-    private static Component newTextComponent(String text) {
-        return Component.text(text)
-                .color(TextColor.color(255, 255, 255))
-                .decoration(TextDecoration.ITALIC, false)
-                .decoration(TextDecoration.BOLD, false)
-                .decoration(TextDecoration.UNDERLINED, false)
-                .decoration(TextDecoration.STRIKETHROUGH, false)
-                .decoration(TextDecoration.OBFUSCATED, false);
     }
 }

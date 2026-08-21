@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.EventManager;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,6 +17,7 @@ public final class FlexLoginUI extends JavaPlugin {
     public static ConfigUtil config;
     public static CommandExecutors commandExecutors;
     public static Logger logger;
+    public static ServerVersion serverVersion;
 
     public static boolean isDebug() {
         return FlexLoginUI.config.isDebug();
@@ -26,12 +28,13 @@ public final class FlexLoginUI extends JavaPlugin {
         // Plugin startup logic
         instance = this;
         logger = getLogger();
+        serverVersion = PacketEvents.getAPI().getServerManager().getVersion();
 
         ConfigUtil.initLangFiles();
         ConfigUtil.initDefaultConfigs();
         config = new ConfigUtil();
 
-        AnvilUtil.setAnvilWindowType();
+        AnvilVersion.setAnvilWindowType();
 
         // 判断 Geyser 是否加载
         boolean hasGeyser = Bukkit.getPluginManager().isPluginEnabled("Geyser-Spigot");

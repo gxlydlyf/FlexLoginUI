@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.dialog.CommonDialogData;
 import com.github.retrooper.packetevents.protocol.dialog.MultiActionDialog;
 import com.github.retrooper.packetevents.protocol.dialog.action.Action;
@@ -12,6 +13,7 @@ import com.github.retrooper.packetevents.protocol.dialog.action.DynamicRunComman
 import com.github.retrooper.packetevents.protocol.dialog.button.ActionButton;
 import com.github.retrooper.packetevents.protocol.nbt.NBT;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
+import com.github.retrooper.packetevents.netty.buffer.ByteBufHelper;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
@@ -22,6 +24,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCustomClickAction;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientNameItem;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerShowDialog;
 import fr.xephi.authme.data.limbo.LimboMessageType;
 import fr.xephi.authme.message.MessageKey;
@@ -41,6 +44,7 @@ import java.util.*;
 
 import static com.gxlydlyf.flexloginui.CommandExecutors.authMeApi;
 import static com.gxlydlyf.flexloginui.DialogUtil.changePasswordText;
+import static com.gxlydlyf.flexloginui.FlexLoginUI.serverVersion;
 
 public class PacketListeners implements PacketListener, Listener {
     public void refreshCustomAnvil(Player player) {
@@ -68,6 +72,34 @@ public class PacketListeners implements PacketListener, Listener {
         disallowCloseKick(player, page.isType(AnvilPageType.LOGIN) || page.isType(AnvilPageType.LOGIN_CAPTCHA));
     }
 
+    // byte[] -> 十六进制字符串
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            // &0xFF 转为无符号8位
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 从 Plugin Message payload 中读取 VarInt 长度前缀的 UTF-8 字符串。
+     * Plugin Message 的 payload 格式为: VarInt(text_length) + UTF-8_bytes
+     * 用于处理 1.8-1.12 协议中 MC|ItemName 频道的数据。
+     */
+    private static @Nullable String readPluginMessageString(byte[] data) {
+        if (data == null || data.length == 0) return null;
+        Object buf = PacketEvents.getAPI().getNettyManager()
+                .getByteBufAllocationOperator().wrappedBuffer(data);
+        try {
+            int strLen = ByteBufHelper.readVarInt(buf);
+            if (strLen <= 0 || strLen > data.length) return null;
+            return ByteBufHelper.toString(buf, ByteBufHelper.readerIndex(buf), strLen, java.nio.charset.StandardCharsets.UTF_8);
+        } finally {
+            ByteBufHelper.release(buf);
+        }
+    }
+
     @Override
     public void onPacketReceive(PacketReceiveEvent e) {
         Player player = e.getPlayer();
@@ -84,6 +116,30 @@ public class PacketListeners implements PacketListener, Listener {
                     if (AnvilUtil.isActiveAnvilPage(uuid)) {
                         AnvilUtil.getAnvilPage(uuid).input = new WrapperPlayClientNameItem(e).getItemName();
                         refreshCustomAnvil(player);
+                    }
+                }
+                case PLUGIN_MESSAGE -> {
+                    // RENAME_ITEM 事件自 1.13 加入，在 Minecraft 1.8-1.12 协议中，铁砧重命名文本没有独立的包 ID，
+                    // Mojang 选择复用 Plugin Message 系统（CUSTOM_PAYLOAD 包），频道名为 MC|ItemName
+                    if (AnvilUtil.isActiveAnvilPage(uuid)) {
+                        if (serverVersion.isOlderThan(ServerVersion.V_1_13)) {
+                            var packet = new WrapperPlayClientPluginMessage(e);
+                            String channel = packet.getChannelName();
+                            // 1.8-1.12: "MC|ItemName" / 1.13+: "minecraft:item_name" legacy compat
+                            if (channel.equals("MC|ItemName") || channel.equals("minecraft:item_name")) {
+                                byte[] data = packet.getData();
+                                // System.out.println(bytesToHex(data));
+                                // noinspection ConstantValue
+                                if (data != null && data.length > 0) {
+                                    String itemName = readPluginMessageString(data);
+                                    if (itemName == null) {
+                                        itemName = "";
+                                    }
+                                    AnvilUtil.getAnvilPage(uuid).input = itemName;
+                                }
+                                refreshCustomAnvil(player);
+                            }
+                        }
                     }
                 }
                 case CLICK_WINDOW -> {
@@ -189,22 +245,23 @@ public class PacketListeners implements PacketListener, Listener {
                         boolean close = payload.getBooleanOr("close", false);
                         switch (id) {
                             case String ignored when isLogin || isRegister ->
-                                handleCustomClickAction(player, isLogin, close,
-                                        payload.getStringTagValueOrDefault("password", ""),
-                                        payload.getStringTagValueOrDefault("confirm", ""));
+                                    handleCustomClickAction(player, isLogin, close,
+                                            payload.getStringTagValueOrDefault("password", ""),
+                                            payload.getStringTagValueOrDefault("confirm", ""));
                             case String ignored when isLogCaptcha || isRegCaptcha ->
-                                handleCaptchaCustomClickAction(player, isLogCaptcha, close,
-                                        payload.getStringTagValueOrDefault("captcha", ""));
-                            case String ignored when isChangePassword ->
-                                handleChangePasswordClickAction(player, close,
-                                        payload.getStringTagValueOrDefault("old_password", ""),
-                                        payload.getStringTagValueOrDefault("new_password", ""),
-                                        payload.getStringTagValueOrDefault("confirm", ""));
-                            default -> {}
+                                    handleCaptchaCustomClickAction(player, isLogCaptcha, close,
+                                            payload.getStringTagValueOrDefault("captcha", ""));
+                            case String ignored when isChangePassword -> handleChangePasswordClickAction(player, close,
+                                    payload.getStringTagValueOrDefault("old_password", ""),
+                                    payload.getStringTagValueOrDefault("new_password", ""),
+                                    payload.getStringTagValueOrDefault("confirm", ""));
+                            default -> {
+                            }
                         }
                     }
                 }
-                default -> {}
+                default -> {
+                }
             }
         }
     }

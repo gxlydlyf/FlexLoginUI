@@ -1,5 +1,6 @@
 package com.gxlydlyf.flexloginui;
 
+import com.gxlydlyf.flexloginui.nbt.DialogEncoder;
 import com.viaversion.nbt.tag.CompoundTag;
 import com.viaversion.nbt.tag.Tag;
 import com.viaversion.viaversion.api.Via;
