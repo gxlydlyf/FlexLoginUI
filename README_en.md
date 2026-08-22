@@ -21,7 +21,7 @@ forms for Geyser Bedrock Edition players.
 ### Required Dependencies
 
 - Java 8 or above
-- Server version 1.14 or above (Only tested on PurpurMC)
+- Server version 1.8.8 or above (Mainly tested on PurpurMC and PaperMC)
 - [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
@@ -38,7 +38,7 @@ forms for Geyser Bedrock Edition players.
 
 Download the plugin from [release](https://github.com/gxlydlyf/FlexLoginUI/release).
 
-- The version with `-downgraded` suffix (e.g. `FlexLoginUI-1.3.1-downgraded.jar`) is for **Java 8 ~ 20**
+- The version with `-downgraded` suffix (e.g. `FlexLoginUI-1.3.1-downgraded.jar`) is for **Java 8 and above**
 - The version without `-downgraded` suffix (e.g. `FlexLoginUI-1.3.1.jar`) is for **Java 21 and above**
 
 Place the downloaded jar into the `plugins` folder under server root directory, then restart the server.
@@ -179,6 +179,11 @@ Do not modify files inside `default_configs`, changes will be overwritten automa
   button will turn into exit game button.
 - `.dialog.horizontal_buttons`: Switch dialog buttons between horizontal and vertical layout
 
+## Acknowledgements
+
+Thanks to **[TWCY114](https://github.com/TWCY114)** for providing AI‑related funding and the development & test server
+environment, which has been of great help to the development of this plugin.
+
 ## License
 
 This project is licensed under MIT License.
@@ -187,21 +192,29 @@ This project is licensed under MIT License.
 
 #### boosted-yaml
 
-This project embeds the [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library, which is licensed under Apache 2.0 License.
+This project embeds the [boosted-yaml](https://github.com/dejvokep/boosted-yaml) library, which is licensed under Apache
+2.0 License.
 
-Full license text: [`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
+Full license text: [
+`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
 
 #### JvmDowngrader
 
-This project uses [JvmDowngrader](https://github.com/unimined/JvmDowngrader) to downgrade Java 21 bytecode to Java 8-compatible bytecode during the build process.
+This project uses [JvmDowngrader](https://github.com/unimined/JvmDowngrader) to downgrade Java 21 bytecode to Java
+8-compatible bytecode during the build process.
 
-- **JvmDowngrader is used only during the build process** of this project. It is not distributed with the plugin and does not affect the final plugin artifact.
-- **End users**: Users who download and use this plugin (including those running paid servers) **do not need** to purchase any commercial license from the JvmDowngrader author.
-- **Plugin developers**: If you wish to use or modify the JvmDowngrader build process in your own project, please follow these licensing terms:
-  1. **Non-commercial use**: Licensed under LGPLv2.1, free to use;
-  2. **Commercial/profit use** (e.g., integrating JvmDowngrader into your own commercial product): A commercial license must be purchased from the author.
+- **JvmDowngrader is used only during the build process** of this project. It is not distributed with the plugin and
+  does not affect the final plugin artifact.
+- **End users**: Users who download and use this plugin (including those running paid servers) **do not need** to
+  purchase any commercial license from the JvmDowngrader author.
+- **Plugin developers**: If you wish to use or modify the JvmDowngrader build process in your own project, please follow
+  these licensing terms:
+    1. **Non-commercial use**: Licensed under LGPLv2.1, free to use;
+    2. **Commercial/profit use** (e.g., integrating JvmDowngrader into your own commercial product): A commercial
+       license must be purchased from the author.
 
-Full license text and legal information: [`license-thirdparty/JvmDowngrader-LICENSE.md`](license-thirdparty/JvmDowngrader-LICENSE.md)
+Full license text and legal information: [
+`license-thirdparty/JvmDowngrader-LICENSE.md`](license-thirdparty/JvmDowngrader-LICENSE.md)
 
 > The main code of this project is licensed under MIT and is not subject to the LGPL copyleft of JvmDowngrader.
 
@@ -211,6 +224,9 @@ Please report bugs, feature requests or suggestions via [issues](https://github.
 encounter errors or have any requirements.
 
 ## Contributing
+
+Contributions are welcome! Before submitting a pull request, please read the [Contributing Guide](CONTRIBUTING.md) and
+the [Contributor License Agreement](CLA.md).
 
 1. **Fork** this repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)

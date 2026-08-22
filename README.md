@@ -16,7 +16,7 @@
 ### 必要依赖
 
 - Java 8 及以上
-- 插件服务器 1.14 及以上 （仅在 PurpurMC 经过测试）
+- 插件服务器 1.8.8 及以上 （主要在 PurpurMC 与 PaperMC 经过测试）
 - [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/)
 - [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
@@ -32,7 +32,7 @@
 
 在 [release](https://github.com/gxlydlyf/FlexLoginUI/release) 下载插件。
 
-- 文件名带 `-downgraded` 后缀的版本（如 `FlexLoginUI-1.3.1-downgraded.jar`）适用于 **Java 8 ~ 20**
+- 文件名带 `-downgraded` 后缀的版本（如 `FlexLoginUI-1.3.1-downgraded.jar`）适用于 **Java 8 及以上**
 - 文件名不带 `-downgraded` 后缀的版本（如 `FlexLoginUI-1.3.1.jar`）适用于 **Java 21 及以上**
 
 将下载的插件放入服务器根目录下 `plugins` 文件夹，然后重启游戏。
@@ -170,6 +170,10 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 - `.dialog.allow_close` `.anvil.allow_close` `.bedrock.allow_close`: 是否允许关闭页面，不允许时，关闭按钮将显示为退出游戏按钮。
 - `.dialog.horizontal_buttons`: 是否要水平显示对话框页面的按钮
 
+## 致谢
+
+感谢 **[天外朝阳](https://space.bilibili.com/1401371563)**，为本项目提供 AI 相关费用资助与开发调试服务器环境，对本插件开发提供重要帮助。
+
 ## 开源协议
 
 本项目使用 MIT License 开源。
@@ -180,7 +184,8 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 本项目附加了 [boosted-yaml](https://github.com/dejvokep/boosted-yaml) 库，采用 Apache 2.0 许可。
 
-完整许可文本见：[`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
+完整许可文本见：[
+`src/main/resources/META-INF/third-party/boosted-yaml-LICENSE`](src/main/resources/META-INF/third-party/boosted-yaml-LICENSE)
 
 #### JvmDowngrader
 
@@ -189,8 +194,8 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 - **JvmDowngrader 仅用于本项目构建过程**，不会随插件分发，也不影响最终生成的插件文件。
 - **最终用户**：下载并使用本插件的用户（包括运营付费服务器的用户）**无需**向 JvmDowngrader 作者购买任何商业许可。
 - **插件开发者**：如需在自己的项目中使用或修改 JvmDowngrader 构建流程，请遵循以下授权规则：
-  1. **非商用场景**：遵循 LGPLv2.1 协议，免费使用；
-  2. **商用/盈利场景**（如将 JvmDowngrader 集成到自己的商业产品中）：必须向作者购买商业授权。
+    1. **非商用场景**：遵循 LGPLv2.1 协议，免费使用；
+    2. **商用/盈利场景**（如将 JvmDowngrader 集成到自己的商业产品中）：必须向作者购买商业授权。
 
 完整授权文本与法律说明：[`license-thirdparty/JvmDowngrader-LICENSE.md`](license-thirdparty/JvmDowngrader-LICENSE.md)
 
@@ -198,9 +203,11 @@ settings.registration.dialog.preJoin.enable，那么 Geyser 将会自动把 Auth
 
 ## 问题
 
-如使用时报错、需要新功能或提出建议，请到 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) 反馈。
+如使用时遇到问题、需要新功能或提出建议，请到 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues) 反馈。
 
 ## 贡献
+
+欢迎贡献！在提交 Pull Request 之前，请先阅读 [贡献指南](CONTRIBUTING.md) 和 [贡献者许可协议](CLA.md)。
 
 1. **Fork** 本仓库
 2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
