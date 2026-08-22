@@ -26,6 +26,10 @@ public class ViaVersionHook {
         return Bukkit.getPlayer(user.getProtocolInfo().getUuid());
     }
 
+    public static UserConnection getUserConnection(Player player) {
+        return Via.getAPI().getConnection(player.getUniqueId());
+    }
+
     public static void registerPacket() {
         // 在 1.21.6 最后的转换层注册监听器
         Protocol1_21_5To1_21_6 protocol = Via.getManager().getProtocolManager().getProtocol(Protocol1_21_5To1_21_6.class);
@@ -66,7 +70,7 @@ public class ViaVersionHook {
         if (!ViaVersionUtil.enabled) {
             return;
         }
-        UserConnection user = Via.getAPI().getConnection(player.getUniqueId());
+        UserConnection user = getUserConnection(player);
         if (user == null) return;
         ProtocolInfo protocolInfo = user.getProtocolInfo();
         if (!protocolInfo.protocolVersion().newerThanOrEqualTo(ProtocolVersion.v1_21_6)) {

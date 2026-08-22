@@ -2,7 +2,6 @@ package com.gxlydlyf.flexloginui;
 
 import com.gxlydlyf.flexloginui.nbt.DialogEncoder;
 import com.viaversion.viaversion.api.Via;
-import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import org.bukkit.entity.Player;
 
@@ -55,10 +54,6 @@ public class ViaVersionUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static UserConnection getUserConnection(Player player) {
-        return Via.getAPI().getConnection(player.getUniqueId());
     }
 
     @SuppressWarnings("unchecked")
