@@ -4,8 +4,8 @@
 
 用于 AuthMeReloaded 的图形化认证插件，支持铁砧登录、客户端 1.21.6+ Dialog 对话框登录、Geyser 基岩版表单登录。
 
-谁需要此插件：使用 AuthMeReloaded 做登录验证、想要跨版本认证界面、想要给Java版玩家提供铁砧/对话框登录界面、给 Geyser
-基岩版玩家提供登录表单的 Minecraft 服务端服主会使用该插件。
+此插件适用：使用 AuthMeReloaded 做登录验证、想要跨版本认证界面、想要给Java版玩家提供铁砧/对话框登录界面、给 Geyser
+基岩版玩家提供登录表单的 Minecraft 服务端的服主。
 
 > [!WARNING]
 > 我可能没有足够的时间对此插件进行测试与开发，欢迎在 [issues](https://github.com/gxlydlyf/FlexLoginUI/issues)
@@ -22,9 +22,11 @@
 
 ### 可选依赖
 
-- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 为高于服务器版本客户端提供 Dialog 界面
-- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) 为低于服务器版本客户端提供铁砧界面，需要先安装
-  ViaVersion
+- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 用于兼容高于服务器版本的客户端。
+  当客户端为 1.21.6 及以上（≥ 1.21.6） 时，提供 Dialog 界面。
+- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) 用于兼容低于服务器版本的客户端。
+  当客户端为 1.21.5 及以下（≤ 1.21.5） 时，提供 铁砧界面。
+  使用前需先安装 ViaVersion
 - [Geyser](https://geysermc.org/download?project=geyser) 和 [Floodgate](https://geysermc.org/download?project=floodgate)
   提供基岩版表单
 

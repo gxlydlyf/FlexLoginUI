@@ -638,7 +638,9 @@ public class PacketListeners implements PacketListener, Listener {
     public static void onPlayerSubmitRegister(Player player, String password, String confirm) {
         String name = player.getName();
         if (!authMeApi.isRegistered(name)) {
-            AnvilUtil.getAnvilPage(player).clearConfirm();
+            if (AnvilUtil.isActiveAnvilPage(player)) {
+                AnvilUtil.getAnvilPage(player).clearConfirm();
+            }
             if (password.equals(confirm)) {
                 ValidationService validationService = AuthMeUtil.validationService;
                 fr.xephi.authme.message.Messages messages = AuthMeUtil.messages;

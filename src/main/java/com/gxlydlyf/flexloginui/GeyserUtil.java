@@ -8,7 +8,6 @@ import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
-import org.geysermc.geyser.api.event.EventRegistrar;
 
 import java.util.UUID;
 
@@ -42,7 +41,10 @@ public class GeyserUtil {
     }
 
     public static void unregisterEventListener() {
-        GeyserApi.api().eventBus().unregisterAll((EventRegistrar) FlexLoginUI.instance);
+        if (geyserListeners != null) {
+            GeyserApi.api().eventBus().unregisterAll(geyserListeners);
+            geyserListeners = null;
+        }
     }
 
     public static GeyserConnection getConnection(UUID uuid) {
@@ -50,7 +52,11 @@ public class GeyserUtil {
     }
 
     public static boolean hasOpenForm(Player player) {
-        return getConnection(player.getUniqueId()).hasFormOpen();
+        GeyserConnection connection = getConnection(player.getUniqueId());
+        if (connection != null) {
+            return connection.hasFormOpen();
+        }
+        return false;
     }
 
     public static void sendForm(Player player, CustomForm.Builder formBuilder, boolean needUnauthed) {

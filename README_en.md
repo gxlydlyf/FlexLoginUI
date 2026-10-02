@@ -27,10 +27,13 @@ forms for Geyser Bedrock Edition players.
 
 ### Optional Dependencies
 
-- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) Provides dialog UI for clients running a newer
+- [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) is used to support clients running a newer version
+  than the server.
+  When the client is on 1.21.6 or newer (≥ 1.21.6), it provides the Dialog UI.
+- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) is used to support clients running an older
   version than the server.
-- [ViaBackwards](https://www.spigotmc.org/resources/viabackwards.27448/) Provides anvil UI for clients running an older
-  version than the server. You need to install ViaVersion first。
+  When the client is on 1.21.5 or older (≤ 1.21.5), it provides the Anvil UI.
+  ViaVersion must be installed first.
 - [Geyser](https://geysermc.org/download?project=geyser) & [Floodgate](https://geysermc.org/download?project=floodgate)
   Enables login form for Bedrock Edition players
 
